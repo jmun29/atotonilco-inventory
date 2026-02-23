@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Atotonilco — Flour Inventory</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1a1a18;
+    --surface: #242420;
+    --surface2: #2e2e29;
+    --surface3: #383832;
+    --border: #4a4a42;
+    --accent: #f5a623;
+    --accent-dark: #c47d0e;
+    --green: #4caf7d;
+    --green-dark: #2d7a52;
+    --blue: #5b9bd5;
+    --red: #e05c5c;
+    --text: #f5f2eb;
+    --text2: #c8c4b8;
+    --text3: #8a8678;
+    --radius: 10px;
+    --font-display: 'Nunito', sans-serif;
+    --font-body: 'Nunito Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* ===== HEADER ===== */
+  .app-header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--accent);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left { display: flex; flex-direction: column; }
+  .app-title {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: 1px;
+    line-height: 1.1;
+  }
+  .app-subtitle {
+    font-size: 13px;
+    color: var(--text3);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  /* Language Toggle */
+  .lang-toggle {
+    display: flex;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 50px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .lang-btn {
+    background: none;
+    border: none;
+    color: var(--text3);
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 800;
+    padding: 6px 14px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .lang-btn.active {
+    background: var(--accent);
+    color: #000;
+  }
+
+  /* ===== NAV TABS ===== */
+  .tab-bar {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-item {
+    flex: 1;
+    min-width: 80px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text3);
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 800;
+    padding: 13px 8px 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .tab-item.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab-item .tab-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+
+  /* ===== MAIN CONTENT ===== */
+  .main {
+    padding: 16px;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  /* Panel show/hide */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ===== FORM ELEMENTS ===== */
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .form-group label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text2);
+    letter-spacing: 0.3px;
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 17px;
+    font-weight: 600;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+    -webkit-appearance: none;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    border-color: var(--accent);
+    background: var(--surface3);
+  }
+  .form-group select { cursor: pointer; }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+
+  .form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .form-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* Readonly / calculated fields */
+  input[readonly] {
+    color: var(--accent) !important;
+    border-color: var(--accent-dark) !important;
+    background: var(--surface3) !important;
+    cursor: default;
+  }
+
+  /* ===== SECTION DIVIDER ===== */
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 16px 0;
+  }
+  .section-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ===== ITEM ROWS (for items produced in batch) ===== */
+  .item-entry {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .item-entry-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .item-num {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .remove-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--red);
+    font-size: 18px;
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    display: block;
+    width: 100%;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 800;
+    padding: 16px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.5px;
+    text-align: center;
+    margin-top: 6px;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn:hover { background: var(--accent-dark); color: #fff; }
+
+  .btn-secondary {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    color: var(--text2);
+    font-size: 16px;
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); background: var(--surface2); }
+
+  .btn-add-item {
+    background: none;
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    color: var(--text3);
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    padding: 14px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.2s;
+    margin-bottom: 12px;
+  }
+  .btn-add-item:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 8px; }
+  .btn-row .btn { flex: 2; }
+  .btn-row .btn-secondary { flex: 1; }
+
+  /* ===== SUMMARY BOX ===== */
+  .summary-box {
+    background: var(--surface2);
+    border: 2px solid var(--accent-dark);
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 16px;
+  }
+  .summary-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 16px;
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-row span:first-child { color: var(--text2); font-weight: 600; }
+  .summary-row span:last-child { color: var(--accent); font-weight: 800; }
+
+  /* ===== LOG TABLE ===== */
+  .log-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  .log-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+    min-width: 500px;
+  }
+  .log-table th {
+    background: var(--surface2);
+    color: var(--text2);
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+  .log-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+    vertical-align: middle;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .log-table tr:last-child td { border-bottom: none; }
+  .log-table tr:hover td { background: var(--surface2); }
+  .log-table td:first-child { color: var(--text); font-weight: 700; }
+
+  .item-tag {
+    display: inline-block;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text2);
+    margin: 2px;
+    white-space: nowrap;
+  }
+  .item-tag.accent { border-color: var(--accent-dark); color: var(--accent); }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text3);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-text { font-size: 18px; font-weight: 700; }
+  .empty-sub { font-size: 14px; margin-top: 6px; }
+
+  /* ===== STAT CARDS (Dashboard) ===== */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ===== INVENTORY LEVELS ===== */
+  .inv-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .inv-item:last-child { border-bottom: none; }
+  .inv-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    flex: 1;
+  }
+  .inv-qty {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 900;
+    min-width: 80px;
+    text-align: right;
+  }
+  .inv-qty.ok { color: var(--green); }
+  .inv-qty.low { color: var(--accent); }
+  .inv-qty.critical { color: var(--red); }
+  .inv-bar-wrap {
+    width: 80px;
+    height: 8px;
+    background: var(--surface3);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .inv-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s;
+  }
+  .inv-bar.ok { background: var(--green); }
+  .inv-bar.low { background: var(--accent); }
+  .inv-bar.critical { background: var(--red); }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--green);
+    color: #000;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 800;
+    padding: 14px 28px;
+    border-radius: 50px;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 999;
+    white-space: nowrap;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ===== RECEIVE INVENTORY ===== */
+  .receive-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+
+  /* ===== SETTINGS ===== */
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-label { font-size: 17px; font-weight: 700; color: var(--text); }
+  .setting-sub { font-size: 13px; color: var(--text3); margin-top: 2px; }
+
+  @media (max-width: 400px) {
+    .form-row-3 { grid-template-columns: 1fr 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="app-header">
+  <div class="header-left">
+    <div class="app-title">ATOTONILCO</div>
+    <div class="app-subtitle" data-t="inventorySystem">Inventory System</div>
+  </div>
+  <div class="lang-toggle">
+    <button class="lang-btn active" onclick="setLang('en')" id="btn-en">EN</button>
+    <button class="lang-btn" onclick="setLang('es')" id="btn-es">ES</button>
+  </div>
+</header>
+
+<!-- ===== TAB BAR ===== -->
+<nav class="tab-bar">
+  <button class="tab-item active" onclick="showTab('dash')" id="tab-dash">
+    <span class="tab-icon">📊</span>
+    <span data-t="dashboard">Dashboard</span>
+  </button>
+  <button class="tab-item" onclick="showTab('log')" id="tab-log">
+    <span class="tab-icon">📋</span>
+    <span data-t="logRun">Log Run</span>
+  </button>
+  <button class="tab-item" onclick="showTab('receive')" id="tab-receive">
+    <span class="tab-icon">📦</span>
+    <span data-t="receive">Receive</span>
+  </button>
+  <button class="tab-item" onclick="showTab('history')" id="tab-history">
+    <span class="tab-icon">🕘</span>
+    <span data-t="history">History</span>
+  </button>
+</nav>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main class="main">
+
+  <!-- ===== DASHBOARD PANEL ===== -->
+  <div class="panel active" id="panel-dash">
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-total-cases">—</div>
+        <div class="stat-label" data-t="casesThisWeek">Cases This Week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-runs">—</div>
+        <div class="stat-label" data-t="runsThisWeek">Runs This Week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-flour-used">—</div>
+        <div class="stat-label" data-t="flourUsedLbs">Flour Used (lbs)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-flour-ratio">—</div>
+        <div class="stat-label" data-t="lbsPerCase">Avg lbs/Case</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📦 <span data-t="currentInventory">Current Inventory</span></div>
+      <div id="inventory-levels">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🕘 <span data-t="recentRuns">Recent Runs</span></div>
+      <div id="recent-runs-list">
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <div class="empty-text" data-t="noRuns">No runs logged yet</div>
+          <div class="empty-sub" data-t="tapLogRun">Tap "Log Run" to get started</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== LOG RUN PANEL ===== -->
+  <div class="panel" id="panel-log">
+    <div class="card">
+      <div class="card-title">📋 <span data-t="logProductionRun">Log Production Run</span></div>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label data-t="date">Date</label>
+          <input type="date" id="run-date">
+        </div>
+        <div class="form-group">
+          <label data-t="shift">Shift</label>
+          <select id="run-shift">
+            <option value="morning" data-t-opt="morning">Morning</option>
+            <option value="afternoon" data-t-opt="afternoon">Afternoon</option>
+            <option value="night" data-t-opt="night">Night</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label data-t="operator">Operator</label>
+        <input type="text" id="run-operator" placeholder="—">
+      </div>
+
+      <hr class="section-divider">
+      <div class="section-label" data-t="ingredientsUsed">Ingredients Used (Total for Entire Run)</div>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label data-t="flourLbs">Flour (lbs)</label>
+          <input type="number" inputmode="decimal" id="ing-flour" value="" placeholder="0" oninput="updateSummary()">
+        </div>
+        <div class="form-group">
+          <label data-t="waterLbs">Water (lbs)</label>
+          <input type="number" inputmode="decimal" id="ing-water" value="" placeholder="0">
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label data-t="saltLbs">Salt (lbs)</label>
+          <input type="number" inputmode="decimal" id="ing-salt" value="" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label data-t="lardLbs">Lard (lbs)</label>
+          <input type="number" inputmode="decimal" id="ing-lard" value="" placeholder="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-t="otherIngredients">Other Ingredients (optional)</label>
+        <input type="text" id="ing-other" placeholder="e.g. Baking powder 2 lbs">
+      </div>
+
+      <hr class="section-divider">
+      <div class="section-label" data-t="itemsProduced">Items Produced This Run</div>
+
+      <div id="items-container"></div>
+
+      <button class="btn-add-item" onclick="addItem()" id="btn-add-item">
+        + <span data-t="addItem">Add Item</span>
+      </button>
+
+      <div class="summary-box" id="run-summary">
+        <div class="summary-title" data-t="runSummary">Run Summary</div>
+        <div class="summary-row">
+          <span data-t="totalCases">Total Cases</span>
+          <span id="sum-cases">—</span>
+        </div>
+        <div class="summary-row">
+          <span data-t="totalFlour">Total Flour</span>
+          <span id="sum-flour">—</span>
+        </div>
+        <div class="summary-row">
+          <span data-t="flourPerCase">Flour / Case</span>
+          <span id="sum-ratio">—</span>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:14px;">
+        <label data-t="notes">Notes</label>
+        <textarea id="run-notes" placeholder="—"></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" onclick="saveRun()" data-t="saveRun">Save Run</button>
+        <button class="btn btn-secondary" onclick="clearRun()" data-t="clear">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== RECEIVE INVENTORY PANEL ===== -->
+  <div class="panel" id="panel-receive">
+    <div class="card">
+      <div class="card-title">📦 <span data-t="receiveInventory">Receive Inventory</span></div>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label data-t="date">Date</label>
+          <input type="date" id="recv-date">
+        </div>
+        <div class="form-group">
+          <label data-t="supplier">Supplier</label>
+          <input type="text" id="recv-supplier" placeholder="—">
+        </div>
+      </div>
+
+      <div class="section-label" data-t="itemsReceived">Items Received</div>
+
+      <div class="receive-item">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label data-t="flourLbs">Flour (lbs)</label>
+            <input type="number" inputmode="decimal" id="recv-flour" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label data-t="bags">Bags / Units</label>
+            <input type="number" inputmode="numeric" id="recv-flour-bags" placeholder="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="receive-item">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label data-t="lardLbs">Lard (lbs)</label>
+            <input type="number" inputmode="decimal" id="recv-lard" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label data-t="units">Units</label>
+            <input type="number" inputmode="numeric" id="recv-lard-units" placeholder="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="receive-item">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label data-t="saltLbs">Salt (lbs)</label>
+            <input type="number" inputmode="decimal" id="recv-salt" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label data-t="units">Units</label>
+            <input type="number" inputmode="numeric" id="recv-salt-units" placeholder="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label data-t="poNumber">PO / Reference #</label>
+        <input type="text" id="recv-po" placeholder="—">
+      </div>
+
+      <div class="form-group">
+        <label data-t="notes">Notes</label>
+        <textarea id="recv-notes" placeholder="—"></textarea>
+      </div>
+
+      <button class="btn" onclick="saveReceival()" data-t="saveReceival">Save Receipt</button>
+    </div>
+  </div>
+
+  <!-- ===== HISTORY PANEL ===== -->
+  <div class="panel" id="panel-history">
+    <div class="card">
+      <div class="card-title">🕘 <span data-t="productionHistory">Production History</span></div>
+      <div class="log-wrapper">
+        <table class="log-table" id="history-table">
+          <thead>
+            <tr>
+              <th data-t="date">Date</th>
+              <th data-t="shift">Shift</th>
+              <th data-t="itemsProducedShort">Items</th>
+              <th data-t="totalCases">Cases</th>
+              <th data-t="flourLbs">Flour (lbs)</th>
+              <th data-t="lbsPerCase">lbs/case</th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+            <tr>
+              <td colspan="6">
+                <div class="empty-state">
+                  <div class="empty-icon">📋</div>
+                  <div class="empty-text" data-t="noRuns">No runs logged yet</div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">📦 <span data-t="receiptHistory">Receipt History</span></div>
+      <div class="log-wrapper">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th data-t="date">Date</th>
+              <th data-t="supplier">Supplier</th>
+              <th data-t="flourLbs">Flour (lbs)</th>
+              <th data-t="lardLbs">Lard (lbs)</th>
+              <th data-t="saltLbs">Salt (lbs)</th>
+            </tr>
+          </thead>
+          <tbody id="receipt-body">
+            <tr>
+              <td colspan="5">
+                <div class="empty-state">
+                  <div class="empty-icon">📦</div>
+                  <div class="empty-text" data-t="noReceipts">No receipts logged yet</div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// TRANSLATIONS
+// ============================================================
+const T = {
+  en: {
+    inventorySystem: "Inventory System",
+    dashboard: "Dashboard",
+    logRun: "Log Run",
+    receive: "Receive",
+    history: "History",
+    casesThisWeek: "Cases This Week",
+    runsThisWeek: "Runs This Week",
+    flourUsedLbs: "Flour Used (lbs)",
+    lbsPerCase: "lbs / Case",
+    currentInventory: "Current Inventory",
+    recentRuns: "Recent Runs",
+    noRuns: "No runs logged yet",
+    tapLogRun: 'Tap "Log Run" to get started',
+    logProductionRun: "Log Production Run",
+    date: "Date",
+    shift: "Shift",
+    morning: "Morning",
+    afternoon: "Afternoon",
+    night: "Night",
+    operator: "Operator",
+    ingredientsUsed: "Ingredients Used (Total for Entire Run)",
+    flourLbs: "Flour (lbs)",
+    waterLbs: "Water (lbs)",
+    saltLbs: "Salt (lbs)",
+    lardLbs: "Lard (lbs)",
+    otherIngredients: "Other Ingredients (optional)",
+    itemsProduced: "Items Produced This Run",
+    itemsProducedShort: "Items",
+    addItem: "Add Item",
+    runSummary: "Run Summary",
+    totalCases: "Total Cases",
+    totalFlour: "Total Flour",
+    flourPerCase: "Flour / Case",
+    notes: "Notes",
+    saveRun: "Save Run",
+    clear: "Clear",
+    receiveInventory: "Receive Inventory",
+    supplier: "Supplier",
+    itemsReceived: "Items Received",
+    bags: "Bags / Units",
+    units: "Units",
+    poNumber: "PO / Reference #",
+    saveReceival: "Save Receipt",
+    productionHistory: "Production History",
+    receiptHistory: "Receipt History",
+    noReceipts: "No receipts logged yet",
+    itemLabel: "Item",
+    casesProduced: "Cases Produced",
+    runSaved: "✓ Run saved!",
+    receiptSaved: "✓ Receipt saved!",
+    flourStock: "Flour",
+    lardStock: "Lard",
+    saltStock: "Salt",
+  },
+  es: {
+    inventorySystem: "Sistema de Inventario",
+    dashboard: "Inicio",
+    logRun: "Registrar",
+    receive: "Recibir",
+    history: "Historial",
+    casesThisWeek: "Cajas Esta Semana",
+    runsThisWeek: "Corridas Esta Semana",
+    flourUsedLbs: "Harina Usada (lbs)",
+    lbsPerCase: "lbs / Caja",
+    currentInventory: "Inventario Actual",
+    recentRuns: "Corridas Recientes",
+    noRuns: "Sin corridas registradas",
+    tapLogRun: 'Toque "Registrar" para comenzar',
+    logProductionRun: "Registrar Corrida de Producción",
+    date: "Fecha",
+    shift: "Turno",
+    morning: "Mañana",
+    afternoon: "Tarde",
+    night: "Noche",
+    operator: "Operador",
+    ingredientsUsed: "Ingredientes Usados (Total de la Corrida)",
+    flourLbs: "Harina (lbs)",
+    waterLbs: "Agua (lbs)",
+    saltLbs: "Sal (lbs)",
+    lardLbs: "Manteca (lbs)",
+    otherIngredients: "Otros Ingredientes (opcional)",
+    itemsProduced: "Artículos Producidos en Esta Corrida",
+    itemsProducedShort: "Artículos",
+    addItem: "Agregar Artículo",
+    runSummary: "Resumen de Corrida",
+    totalCases: "Total de Cajas",
+    totalFlour: "Total de Harina",
+    flourPerCase: "Harina / Caja",
+    notes: "Notas",
+    saveRun: "Guardar Corrida",
+    clear: "Limpiar",
+    receiveInventory: "Recibir Inventario",
+    supplier: "Proveedor",
+    itemsReceived: "Artículos Recibidos",
+    bags: "Bolsas / Unidades",
+    units: "Unidades",
+    poNumber: "# de Orden / Referencia",
+    saveReceival: "Guardar Recibo",
+    productionHistory: "Historial de Producción",
+    receiptHistory: "Historial de Recibos",
+    noReceipts: "Sin recibos registrados",
+    itemLabel: "Artículo",
+    casesProduced: "Cajas Producidas",
+    runSaved: "✓ ¡Corrida guardada!",
+    receiptSaved: "✓ ¡Recibo guardado!",
+    flourStock: "Harina",
+    lardStock: "Manteca",
+    saltStock: "Sal",
+  }
+};
+
+let currentLang = 'en';
+let itemCount = 0;
+let runs = [];
+let receipts = [];
+let inventory = { flour: 5000, lard: 500, salt: 200 };
+
+// ============================================================
+// LANGUAGE
+// ============================================================
+function setLang(lang) {
+  currentLang = lang;
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-es').classList.toggle('active', lang === 'es');
+
+  // Update all data-t elements
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const key = el.getAttribute('data-t');
+    if (T[lang][key]) el.textContent = T[lang][key];
+  });
+
+  // Update select options
+  document.querySelectorAll('[data-t-opt]').forEach(el => {
+    const key = el.getAttribute('data-t-opt');
+    if (T[lang][key]) el.textContent = T[lang][key];
+  });
+
+  // Update item entries
+  document.querySelectorAll('.item-label').forEach((el, i) => {
+    el.textContent = T[lang].itemLabel + ' ' + (i + 1);
+  });
+  document.querySelectorAll('.cases-label').forEach(el => {
+    el.textContent = T[lang].casesProduced;
+  });
+
+  // Update placeholders
+  refreshDashboard();
+}
+
+function t(key) { return T[currentLang][key] || key; }
+
+// ============================================================
+// TABS
+// ============================================================
+function showTab(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+// ============================================================
+// ITEMS (in production run)
+// ============================================================
+const PRODUCT_LIST = [
+  'Burrito #1', 'Burrito #2', 'Burrito #3',
+  'Other / Otro'
+];
+
+function addItem() {
+  itemCount++;
+  const container = document.getElementById('items-container');
+  const div = document.createElement('div');
+  div.className = 'item-entry';
+  div.id = 'item-' + itemCount;
+  div.innerHTML = `
+    <div class="item-entry-header">
+      <div class="item-num item-label">${t('itemLabel')} ${itemCount}</div>
+      <button class="remove-btn" onclick="removeItem(${itemCount})">✕</button>
+    </div>
+    <div class="form-group">
+      <label>${t('itemLabel')}</label>
+      <select class="item-select">
+        ${PRODUCT_LIST.map(p => `<option value="${p}">${p}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="cases-label">${t('casesProduced')}</label>
+      <input type="number" inputmode="numeric" class="item-cases" placeholder="0" oninput="updateSummary()">
+    </div>
+  `;
+  container.appendChild(div);
+  updateSummary();
+}
+
+function removeItem(id) {
+  const el = document.getElementById('item-' + id);
+  if (el) el.remove();
+  // Renumber labels
+  document.querySelectorAll('.item-label').forEach((el, i) => {
+    el.textContent = t('itemLabel') + ' ' + (i + 1);
+  });
+  updateSummary();
+}
+
+// ============================================================
+// SUMMARY CALCULATION
+// ============================================================
+function updateSummary() {
+  const flour = parseFloat(document.getElementById('ing-flour').value) || 0;
+  let totalCases = 0;
+  document.querySelectorAll('.item-cases').forEach(inp => {
+    totalCases += parseFloat(inp.value) || 0;
+  });
+  const ratio = totalCases > 0 ? (flour / totalCases).toFixed(2) : '—';
+  document.getElementById('sum-cases').textContent = totalCases > 0 ? totalCases : '—';
+  document.getElementById('sum-flour').textContent = flour > 0 ? flour.toLocaleString() + ' lbs' : '—';
+  document.getElementById('sum-ratio').textContent = ratio !== '—' ? ratio + ' lbs/case' : '—';
+}
+
+// ============================================================
+// SAVE RUN
+// ============================================================
+function saveRun() {
+  const date = document.getElementById('run-date').value;
+  const shift = document.getElementById('run-shift').value;
+  const operator = document.getElementById('run-operator').value;
+  const flour = parseFloat(document.getElementById('ing-flour').value) || 0;
+  const water = parseFloat(document.getElementById('ing-water').value) || 0;
+  const salt = parseFloat(document.getElementById('ing-salt').value) || 0;
+  const lard = parseFloat(document.getElementById('ing-lard').value) || 0;
+  const otherIng = document.getElementById('ing-other').value;
+  const notes = document.getElementById('run-notes').value;
+
+  if (!date || flour === 0) {
+    showToast('⚠ ' + (currentLang === 'es' ? 'Ingrese fecha y harina' : 'Enter date and flour amount'), true);
+    return;
+  }
+
+  const items = [];
+  let totalCases = 0;
+  document.querySelectorAll('.item-entry').forEach(entry => {
+    const name = entry.querySelector('.item-select')?.value || '';
+    const cases = parseFloat(entry.querySelector('.item-cases')?.value) || 0;
+    if (name && cases > 0) {
+      items.push({ name, cases });
+      totalCases += cases;
+    }
+  });
+
+  const run = {
+    id: Date.now(),
+    date, shift, operator, flour, water, salt, lard, otherIng, notes,
+    items, totalCases,
+    ratio: totalCases > 0 ? (flour / totalCases).toFixed(2) : '—'
+  };
+  runs.unshift(run);
+
+  // Deduct from inventory
+  inventory.flour = Math.max(0, inventory.flour - flour);
+  inventory.salt = Math.max(0, inventory.salt - salt);
+  inventory.lard = Math.max(0, inventory.lard - lard);
+
+  clearRun();
+  refreshDashboard();
+  renderHistory();
+  showToast(t('runSaved'));
+  showTab('dash');
+}
+
+function clearRun() {
+  document.getElementById('run-date').value = '';
+  document.getElementById('run-operator').value = '';
+  document.getElementById('ing-flour').value = '';
+  document.getElementById('ing-water').value = '';
+  document.getElementById('ing-salt').value = '';
+  document.getElementById('ing-lard').value = '';
+  document.getElementById('ing-other').value = '';
+  document.getElementById('run-notes').value = '';
+  document.getElementById('items-container').innerHTML = '';
+  itemCount = 0;
+  updateSummary();
+}
+
+// ============================================================
+// SAVE RECEIPT
+// ============================================================
+function saveReceival() {
+  const date = document.getElementById('recv-date').value;
+  const supplier = document.getElementById('recv-supplier').value;
+  const flour = parseFloat(document.getElementById('recv-flour').value) || 0;
+  const lard = parseFloat(document.getElementById('recv-lard').value) || 0;
+  const salt = parseFloat(document.getElementById('recv-salt').value) || 0;
+  const po = document.getElementById('recv-po').value;
+  const notes = document.getElementById('recv-notes').value;
+
+  if (!date) {
+    showToast('⚠ ' + (currentLang === 'es' ? 'Ingrese la fecha' : 'Enter a date'), true);
+    return;
+  }
+
+  receipts.unshift({ id: Date.now(), date, supplier, flour, lard, salt, po, notes });
+
+  inventory.flour += flour;
+  inventory.lard += lard;
+  inventory.salt += salt;
+
+  // Clear form
+  ['recv-date','recv-supplier','recv-flour','recv-flour-bags',
+   'recv-lard','recv-lard-units','recv-salt','recv-salt-units','recv-po','recv-notes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+
+  refreshDashboard();
+  renderHistory();
+  showToast(t('receiptSaved'));
+  showTab('dash');
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function refreshDashboard() {
+  // Stats (this week)
+  const now = new Date();
+  const weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate() - 7);
+  const weekRuns = runs.filter(r => new Date(r.date) >= weekAgo);
+  const weekCases = weekRuns.reduce((a, r) => a + r.totalCases, 0);
+  const weekFlour = weekRuns.reduce((a, r) => a + r.flour, 0);
+  const avgRatio = weekCases > 0 ? (weekFlour / weekCases).toFixed(2) : '—';
+
+  document.getElementById('stat-total-cases').textContent = weekCases || '0';
+  document.getElementById('stat-runs').textContent = weekRuns.length || '0';
+  document.getElementById('stat-flour-used').textContent = weekFlour ? weekFlour.toLocaleString() : '0';
+  document.getElementById('stat-flour-ratio').textContent = avgRatio !== '—' ? avgRatio : '—';
+
+  // Inventory levels
+  const invEl = document.getElementById('inventory-levels');
+  const items = [
+    { key: 'flourStock', qty: inventory.flour, unit: 'lbs', max: 10000 },
+    { key: 'lardStock', qty: inventory.lard, unit: 'lbs', max: 1000 },
+    { key: 'saltStock', qty: inventory.salt, unit: 'lbs', max: 500 },
+  ];
+  invEl.innerHTML = items.map(item => {
+    const pct = Math.min(100, Math.round((item.qty / item.max) * 100));
+    const cls = pct > 40 ? 'ok' : pct > 15 ? 'low' : 'critical';
+    return `
+      <div class="inv-item">
+        <div class="inv-name">${t(item.key)}</div>
+        <div class="inv-bar-wrap"><div class="inv-bar ${cls}" style="width:${pct}%"></div></div>
+        <div class="inv-qty ${cls}">${item.qty.toLocaleString()}<span style="font-size:13px;font-weight:600"> ${item.unit}</span></div>
+      </div>
+    `;
+  }).join('');
+
+  // Recent runs
+  const recentEl = document.getElementById('recent-runs-list');
+  if (runs.length === 0) {
+    recentEl.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <div class="empty-text">${t('noRuns')}</div>
+      <div class="empty-sub">${t('tapLogRun')}</div>
+    </div>`;
+    return;
+  }
+  recentEl.innerHTML = runs.slice(0, 5).map(r => `
+    <div class="inv-item" style="flex-direction:column; align-items:flex-start; gap:6px;">
+      <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+        <span style="font-size:16px; font-weight:800; color:var(--text)">${r.date}</span>
+        <span style="font-size:16px; font-weight:800; color:var(--accent)">${r.totalCases} cases</span>
+      </div>
+      <div>${r.items.map(i => `<span class="item-tag accent">${i.name}: ${i.cases}</span>`).join('')}</div>
+      <div style="font-size:14px; color:var(--text3)">🌾 ${r.flour} lbs flour &nbsp;·&nbsp; ${r.ratio} lbs/case</div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// HISTORY TABLE
+// ============================================================
+function renderHistory() {
+  const body = document.getElementById('history-body');
+  if (runs.length === 0) {
+    body.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">${t('noRuns')}</div></div></td></tr>`;
+  } else {
+    body.innerHTML = runs.map(r => `
+      <tr>
+        <td>${r.date}</td>
+        <td>${r.shift}</td>
+        <td>${r.items.map(i => `<span class="item-tag">${i.name}: ${i.cases}</span>`).join('')}</td>
+        <td>${r.totalCases}</td>
+        <td>${r.flour.toLocaleString()}</td>
+        <td>${r.ratio}</td>
+      </tr>
+    `).join('');
+  }
+
+  const recBody = document.getElementById('receipt-body');
+  if (receipts.length === 0) {
+    recBody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">${t('noReceipts')}</div></div></td></tr>`;
+  } else {
+    recBody.innerHTML = receipts.map(r => `
+      <tr>
+        <td>${r.date}</td>
+        <td>${r.supplier || '—'}</td>
+        <td>${r.flour || '—'}</td>
+        <td>${r.lard || '—'}</td>
+        <td>${r.salt || '—'}</td>
+      </tr>
+    `).join('');
+  }
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, warn) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = warn ? 'var(--red)' : 'var(--green)';
+  el.style.color = warn ? '#fff' : '#000';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  // Set today's date
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('run-date').value = today;
+  document.getElementById('recv-date').value = today;
+
+  // Seed one example run
+  runs.push({
+    id: 1,
+    date: '2025-12-23',
+    shift: 'morning',
+    operator: 'Carlos',
+    flour: 1450, water: 870, salt: 14.5, lard: 87,
+    otherIng: '', notes: '',
+    items: [{ name: 'Burrito #1', cases: 312 }, { name: 'Burrito #2', cases: 198 }],
+    totalCases: 510,
+    ratio: '2.84'
+  });
+
+  refreshDashboard();
+  renderHistory();
+  addItem(); // start with one item row
+}
+
+init();
+</script>
+</body>
+</html>
