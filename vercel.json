@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/Atotonilco_Inventory_App_v2.html" }
+  ]
+}
