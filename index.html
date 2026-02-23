@@ -2,1293 +2,1015 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Atotonilco — Flour Inventory</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- ============================================================
+     SUPABASE CONFIGURATION
+     Replace the two values below with your actual credentials
+     from Supabase → Settings → API
+============================================================ -->
+<script>
+  const SUPABASE_URL  = 'https://xbczzyrsugfwpiwqnynq.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhiY3p6eXJzdWdmd3Bpd3FueW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NzY2NjEsImV4cCI6MjA4NzQ1MjY2MX0.1QDqXPift-ZUj-zQhex0HvOUCUJfpWQat0gybji9DwM';
+</script>
+
 <style>
   :root {
-    --bg: #1a1a18;
-    --surface: #242420;
-    --surface2: #2e2e29;
-    --surface3: #383832;
-    --border: #4a4a42;
-    --accent: #f5a623;
-    --accent-dark: #c47d0e;
-    --green: #4caf7d;
-    --green-dark: #2d7a52;
-    --blue: #5b9bd5;
-    --red: #e05c5c;
-    --text: #f5f2eb;
-    --text2: #c8c4b8;
-    --text3: #8a8678;
-    --radius: 10px;
-    --font-display: 'Nunito', sans-serif;
-    --font-body: 'Nunito Sans', sans-serif;
+    --bg:#1a1a18; --surface:#242420; --surface2:#2e2e29; --surface3:#383832;
+    --border:#4a4a42; --accent:#f5a623; --accent-dark:#c47d0e;
+    --green:#4caf7d; --green-dark:#2d7a52; --blue:#5b9bd5; --red:#e05c5c;
+    --text:#f5f2eb; --text2:#c8c4b8; --text3:#8a8678; --radius:10px;
+    --font-display:'Nunito',sans-serif; --font-body:'Nunito Sans',sans-serif;
   }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:16px;line-height:1.6;min-height:100vh;padding-bottom:40px;}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* PIN LOCK */
+  #lock-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;}
+  #lock-screen.hidden{display:none;}
+  .lock-logo{font-family:var(--font-display);font-size:36px;font-weight:900;color:var(--accent);letter-spacing:2px;margin-bottom:6px;}
+  .lock-sub{font-size:15px;color:var(--text3);font-weight:600;margin-bottom:40px;}
+  .lock-icon{font-size:56px;margin-bottom:24px;}
+  .pin-dots{display:flex;gap:16px;margin-bottom:32px;}
+  .pin-dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:all 0.2s;}
+  .pin-dot.filled{background:var(--accent);border-color:var(--accent);}
+  .pin-dot.error{background:var(--red);border-color:var(--red);}
+  .pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%;max-width:300px;}
+  .pin-key{background:var(--surface);border:2px solid var(--border);border-radius:12px;color:var(--text);font-family:var(--font-display);font-size:26px;font-weight:800;padding:18px;cursor:pointer;transition:all 0.15s;text-align:center;-webkit-tap-highlight-color:transparent;user-select:none;}
+  .pin-key:active{background:var(--accent);color:#000;transform:scale(0.94);}
+  .pin-key.del{font-size:20px;color:var(--text3);}
+  .pin-key.empty{background:none;border:none;cursor:default;}
+  .pin-error-msg{margin-top:20px;font-size:15px;font-weight:700;color:var(--red);min-height:24px;text-align:center;}
+  .pin-hint{margin-top:24px;font-size:13px;color:var(--text3);text-align:center;line-height:1.5;}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 16px;
-    line-height: 1.6;
-    min-height: 100vh;
-    padding-bottom: 40px;
-  }
+  /* HEADER */
+  .app-header{background:var(--surface);border-bottom:2px solid var(--accent);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+  .app-title{font-family:var(--font-display);font-size:22px;font-weight:900;color:var(--accent);letter-spacing:1px;line-height:1.1;}
+  .app-subtitle{font-size:13px;color:var(--text3);font-weight:600;}
+  .header-right{display:flex;align-items:center;gap:10px;}
+  .sync-indicator{font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid var(--border);color:var(--text3);}
+  .sync-indicator.ok{border-color:var(--green);color:var(--green);}
+  .sync-indicator.err{border-color:var(--red);color:var(--red);}
+  .sync-indicator.syncing{border-color:var(--accent);color:var(--accent);}
+  .lock-btn{background:var(--surface2);border:2px solid var(--border);border-radius:8px;color:var(--text3);font-size:20px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .lang-toggle{display:flex;background:var(--surface2);border:2px solid var(--border);border-radius:50px;padding:3px;gap:2px;}
+  .lang-btn{background:none;border:none;color:var(--text3);font-family:var(--font-display);font-size:14px;font-weight:800;padding:6px 14px;border-radius:50px;cursor:pointer;transition:all 0.2s;}
+  .lang-btn.active{background:var(--accent);color:#000;}
 
-  /* ===== HEADER ===== */
-  .app-header {
-    background: var(--surface);
-    border-bottom: 2px solid var(--accent);
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .header-left { display: flex; flex-direction: column; }
-  .app-title {
-    font-family: var(--font-display);
-    font-size: 22px;
-    font-weight: 900;
-    color: var(--accent);
-    letter-spacing: 1px;
-    line-height: 1.1;
-  }
-  .app-subtitle {
-    font-size: 13px;
-    color: var(--text3);
-    font-weight: 600;
-    letter-spacing: 0.5px;
-  }
+  /* TABS */
+  .tab-bar{display:flex;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .tab-bar::-webkit-scrollbar{display:none;}
+  .tab-item{flex:1;min-width:65px;background:none;border:none;border-bottom:3px solid transparent;color:var(--text3);font-family:var(--font-display);font-size:11px;font-weight:800;padding:11px 4px 9px;cursor:pointer;transition:all 0.2s;text-align:center;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
+  .tab-item.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .tab-item .tab-icon{font-size:18px;display:block;margin-bottom:2px;}
 
-  /* Language Toggle */
-  .lang-toggle {
-    display: flex;
-    background: var(--surface2);
-    border: 2px solid var(--border);
-    border-radius: 50px;
-    padding: 3px;
-    gap: 2px;
-  }
-  .lang-btn {
-    background: none;
-    border: none;
-    color: var(--text3);
-    font-family: var(--font-display);
-    font-size: 14px;
-    font-weight: 800;
-    padding: 6px 14px;
-    border-radius: 50px;
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.5px;
-  }
-  .lang-btn.active {
-    background: var(--accent);
-    color: #000;
-  }
+  /* MAIN */
+  .main{padding:16px;max-width:700px;margin:0 auto;}
+  .panel{display:none;} .panel.active{display:block;}
 
-  /* ===== NAV TABS ===== */
-  .tab-bar {
-    display: flex;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .tab-bar::-webkit-scrollbar { display: none; }
-  .tab-item {
-    flex: 1;
-    min-width: 80px;
-    background: none;
-    border: none;
-    border-bottom: 3px solid transparent;
-    color: var(--text3);
-    font-family: var(--font-display);
-    font-size: 13px;
-    font-weight: 800;
-    padding: 13px 8px 11px;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: center;
-    white-space: nowrap;
-  }
-  .tab-item.active {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-  }
-  .tab-item .tab-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+  /* CARDS */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px;}
+  .card-title{font-family:var(--font-display);font-size:17px;font-weight:800;color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
 
-  /* ===== MAIN CONTENT ===== */
-  .main {
-    padding: 16px;
-    max-width: 700px;
-    margin: 0 auto;
-  }
+  /* FORMS */
+  .form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+  .form-group label{font-size:14px;font-weight:700;color:var(--text2);}
+  .form-group input,.form-group select,.form-group textarea{background:var(--surface2);border:2px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:17px;font-weight:600;padding:12px 14px;outline:none;transition:border-color 0.15s;width:100%;-webkit-appearance:none;}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);background:var(--surface3);}
+  .form-group select{cursor:pointer;} .form-group textarea{resize:vertical;min-height:80px;}
+  input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!important;background:var(--surface3)!important;cursor:default;}
+  .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
 
-  /* Panel show/hide */
-  .panel { display: none; }
-  .panel.active { display: block; }
+  /* INGREDIENT ROW */
+  .ing-row{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px;}
+  .ing-row-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .ing-name{font-family:var(--font-display);font-size:15px;font-weight:800;color:var(--text);}
+  .ing-unit-badge{font-size:12px;font-weight:700;color:var(--accent);background:var(--surface3);border:1px solid var(--accent-dark);border-radius:20px;padding:2px 10px;}
 
-  /* ===== CARDS ===== */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 18px;
-    margin-bottom: 16px;
-  }
-  .card-title {
-    font-family: var(--font-display);
-    font-size: 17px;
-    font-weight: 800;
-    color: var(--accent);
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  /* DIVIDERS */
+  .section-divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+  .section-label{font-size:12px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--border);}
 
-  /* ===== FORM ELEMENTS ===== */
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 14px;
-  }
-  .form-group label {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text2);
-    letter-spacing: 0.3px;
-  }
-  .form-group input,
-  .form-group select,
-  .form-group textarea {
-    background: var(--surface2);
-    border: 2px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 17px;
-    font-weight: 600;
-    padding: 12px 14px;
-    outline: none;
-    transition: border-color 0.15s;
-    width: 100%;
-    -webkit-appearance: none;
-  }
-  .form-group input:focus,
-  .form-group select:focus,
-  .form-group textarea:focus {
-    border-color: var(--accent);
-    background: var(--surface3);
-  }
-  .form-group select { cursor: pointer; }
-  .form-group textarea { resize: vertical; min-height: 80px; }
+  /* ITEM ENTRIES */
+  .item-entry{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;}
+  .item-entry-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .item-num{font-family:var(--font-display);font-size:13px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:1px;}
+  .remove-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--red);font-size:18px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
 
-  .form-row-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  .form-row-3 {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
-  }
+  /* BUTTONS */
+  .btn{display:block;width:100%;background:var(--accent);color:#000;border:none;border-radius:10px;font-family:var(--font-display);font-size:18px;font-weight:800;padding:16px;cursor:pointer;transition:all 0.15s;text-align:center;margin-top:6px;-webkit-tap-highlight-color:transparent;}
+  .btn:active{transform:scale(0.98);} .btn:hover{background:var(--accent-dark);color:#fff;}
+  .btn-secondary{background:var(--surface2);border:2px solid var(--border);color:var(--text2);font-size:16px;}
+  .btn-secondary:hover{border-color:var(--accent);color:var(--accent);background:var(--surface2);}
+  .btn-green{background:var(--green);color:#000;} .btn-green:hover{background:var(--green-dark);color:#fff;}
+  .btn-add-item{background:none;border:2px dashed var(--border);border-radius:10px;color:var(--text3);font-family:var(--font-display);font-size:16px;font-weight:700;padding:14px;cursor:pointer;width:100%;transition:all 0.2s;margin-bottom:12px;}
+  .btn-add-item:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-row{display:flex;gap:10px;margin-top:8px;} .btn-row .btn{flex:2;} .btn-row .btn-secondary{flex:1;}
 
-  /* Readonly / calculated fields */
-  input[readonly] {
-    color: var(--accent) !important;
-    border-color: var(--accent-dark) !important;
-    background: var(--surface3) !important;
-    cursor: default;
-  }
+  /* SUMMARY */
+  .summary-box{background:var(--surface2);border:2px solid var(--accent-dark);border-radius:10px;padding:16px;margin-top:16px;}
+  .summary-title{font-family:var(--font-display);font-size:14px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+  .summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:16px;}
+  .summary-row:last-child{border-bottom:none;}
+  .summary-row span:first-child{color:var(--text2);font-weight:600;}
+  .summary-row span:last-child{color:var(--accent);font-weight:800;}
 
-  /* ===== SECTION DIVIDER ===== */
-  .section-divider {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 16px 0;
-  }
-  .section-label {
-    font-size: 12px;
-    font-weight: 800;
-    color: var(--text3);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .section-label::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
+  /* LOG TABLE */
+  .log-wrapper{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius);border:1px solid var(--border);}
+  .log-table{width:100%;border-collapse:collapse;font-size:14px;min-width:500px;}
+  .log-table th{background:var(--surface2);color:var(--text2);font-family:var(--font-display);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;padding:11px 12px;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap;}
+  .log-table td{padding:11px 12px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle;font-weight:600;}
+  .log-table tr:last-child td{border-bottom:none;} .log-table tr:hover td{background:var(--surface2);}
+  .log-table td:first-child{color:var(--text);font-weight:700;}
+  .item-tag{display:inline-block;background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:12px;font-weight:700;color:var(--text2);margin:2px;white-space:nowrap;}
+  .item-tag.accent{border-color:var(--accent-dark);color:var(--accent);}
 
-  /* ===== ITEM ROWS (for items produced in batch) ===== */
-  .item-entry {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px;
-    margin-bottom: 10px;
-    position: relative;
-  }
-  .item-entry-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
-  .item-num {
-    font-family: var(--font-display);
-    font-size: 13px;
-    font-weight: 800;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-  .remove-btn {
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--red);
-    font-size: 18px;
-    width: 32px; height: 32px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-  }
+  /* STATS */
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;}
+  .stat-value{font-family:var(--font-display);font-size:30px;font-weight:900;color:var(--accent);line-height:1;margin-bottom:4px;}
+  .stat-label{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;}
 
-  /* ===== BUTTONS ===== */
-  .btn {
-    display: block;
-    width: 100%;
-    background: var(--accent);
-    color: #000;
-    border: none;
-    border-radius: 10px;
-    font-family: var(--font-display);
-    font-size: 18px;
-    font-weight: 800;
-    padding: 16px;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
-    letter-spacing: 0.5px;
-    text-align: center;
-    margin-top: 6px;
-  }
-  .btn:active { transform: scale(0.98); }
-  .btn:hover { background: var(--accent-dark); color: #fff; }
+  /* INVENTORY BARS */
+  .inv-item{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);}
+  .inv-item:last-child{border-bottom:none;}
+  .inv-name{font-size:15px;font-weight:700;color:var(--text);flex:1;}
+  .inv-qty{font-family:var(--font-display);font-size:18px;font-weight:900;min-width:90px;text-align:right;}
+  .inv-qty.ok{color:var(--green);} .inv-qty.low{color:var(--accent);} .inv-qty.critical{color:var(--red);}
+  .inv-bar-wrap{width:60px;height:8px;background:var(--surface3);border-radius:4px;overflow:hidden;}
+  .inv-bar{height:100%;border-radius:4px;transition:width 0.4s;}
+  .inv-bar.ok{background:var(--green);} .inv-bar.low{background:var(--accent);} .inv-bar.critical{background:var(--red);}
 
-  .btn-secondary {
-    background: var(--surface2);
-    border: 2px solid var(--border);
-    color: var(--text2);
-    font-size: 16px;
-  }
-  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); background: var(--surface2); }
+  /* EXPORT */
+  .export-option{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:12px;}
+  .export-title{font-family:var(--font-display);font-size:17px;font-weight:800;color:var(--text);margin-bottom:6px;}
+  .export-desc{font-size:14px;color:var(--text3);margin-bottom:14px;line-height:1.5;}
+  .export-btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .export-btn{background:var(--green);color:#000;border:none;border-radius:8px;font-family:var(--font-display);font-size:14px;font-weight:800;padding:10px 18px;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+  .export-btn:hover{background:var(--green-dark);color:#fff;}
+  .export-btn.blue{background:var(--blue);color:#fff;} .export-btn.blue:hover{background:#3a6fa8;}
 
-  .btn-add-item {
-    background: none;
-    border: 2px dashed var(--border);
-    border-radius: 10px;
-    color: var(--text3);
-    font-family: var(--font-display);
-    font-size: 16px;
-    font-weight: 700;
-    padding: 14px;
-    cursor: pointer;
-    width: 100%;
-    transition: all 0.2s;
-    margin-bottom: 12px;
-  }
-  .btn-add-item:hover { border-color: var(--accent); color: var(--accent); }
+  /* FILTER */
+  .filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .filter-btn{background:var(--surface2);border:2px solid var(--border);border-radius:8px;color:var(--text3);font-family:var(--font-display);font-size:13px;font-weight:800;padding:8px 16px;cursor:pointer;transition:all 0.15s;}
+  .filter-btn.active{background:var(--accent);color:#000;border-color:var(--accent);}
 
-  .btn-row { display: flex; gap: 10px; margin-top: 8px; }
-  .btn-row .btn { flex: 2; }
-  .btn-row .btn-secondary { flex: 1; }
+  /* EMPTY */
+  .empty-state{text-align:center;padding:40px 24px;color:var(--text3);}
+  .empty-icon{font-size:44px;margin-bottom:10px;} .empty-text{font-size:17px;font-weight:700;} .empty-sub{font-size:14px;margin-top:6px;}
 
-  /* ===== SUMMARY BOX ===== */
-  .summary-box {
-    background: var(--surface2);
-    border: 2px solid var(--accent-dark);
-    border-radius: 10px;
-    padding: 16px;
-    margin-top: 16px;
-  }
-  .summary-title {
-    font-family: var(--font-display);
-    font-size: 14px;
-    font-weight: 800;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
-  }
-  .summary-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 16px;
-  }
-  .summary-row:last-child { border-bottom: none; }
-  .summary-row span:first-child { color: var(--text2); font-weight: 600; }
-  .summary-row span:last-child { color: var(--accent); font-weight: 800; }
+  /* LOADING OVERLAY */
+  #loading-overlay{position:fixed;inset:0;background:rgba(26,26,24,0.85);z-index:8000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+  #loading-overlay.hidden{display:none;}
+  .loading-spinner{width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;}
+  .loading-text{font-family:var(--font-display);font-size:16px;font-weight:800;color:var(--text2);}
+  @keyframes spin{to{transform:rotate(360deg);}}
 
-  /* ===== LOG TABLE ===== */
-  .log-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-  }
-  .log-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 15px;
-    min-width: 500px;
-  }
-  .log-table th {
-    background: var(--surface2);
-    color: var(--text2);
-    font-family: var(--font-display);
-    font-size: 13px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    padding: 12px 14px;
-    text-align: left;
-    border-bottom: 2px solid var(--border);
-    white-space: nowrap;
-  }
-  .log-table td {
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--border);
-    color: var(--text2);
-    vertical-align: middle;
-    font-weight: 600;
-    font-size: 15px;
-  }
-  .log-table tr:last-child td { border-bottom: none; }
-  .log-table tr:hover td { background: var(--surface2); }
-  .log-table td:first-child { color: var(--text); font-weight: 700; }
-
-  .item-tag {
-    display: inline-block;
-    background: var(--surface3);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 3px 8px;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text2);
-    margin: 2px;
-    white-space: nowrap;
-  }
-  .item-tag.accent { border-color: var(--accent-dark); color: var(--accent); }
-
-  .empty-state {
-    text-align: center;
-    padding: 48px 24px;
-    color: var(--text3);
-  }
-  .empty-icon { font-size: 48px; margin-bottom: 12px; }
-  .empty-text { font-size: 18px; font-weight: 700; }
-  .empty-sub { font-size: 14px; margin-top: 6px; }
-
-  /* ===== STAT CARDS (Dashboard) ===== */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    text-align: center;
-  }
-  .stat-value {
-    font-family: var(--font-display);
-    font-size: 32px;
-    font-weight: 900;
-    color: var(--accent);
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  .stat-label {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text3);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  /* ===== INVENTORY LEVELS ===== */
-  .inv-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .inv-item:last-child { border-bottom: none; }
-  .inv-name {
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--text);
-    flex: 1;
-  }
-  .inv-qty {
-    font-family: var(--font-display);
-    font-size: 20px;
-    font-weight: 900;
-    min-width: 80px;
-    text-align: right;
-  }
-  .inv-qty.ok { color: var(--green); }
-  .inv-qty.low { color: var(--accent); }
-  .inv-qty.critical { color: var(--red); }
-  .inv-bar-wrap {
-    width: 80px;
-    height: 8px;
-    background: var(--surface3);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  .inv-bar {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.4s;
-  }
-  .inv-bar.ok { background: var(--green); }
-  .inv-bar.low { background: var(--accent); }
-  .inv-bar.critical { background: var(--red); }
-
-  /* ===== TOAST ===== */
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: var(--green);
-    color: #000;
-    font-family: var(--font-display);
-    font-size: 16px;
-    font-weight: 800;
-    padding: 14px 28px;
-    border-radius: 50px;
-    opacity: 0;
-    transition: all 0.3s;
-    z-index: 999;
-    white-space: nowrap;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
-  }
-  .toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-
-  /* ===== RECEIVE INVENTORY ===== */
-  .receive-item {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px;
-    margin-bottom: 10px;
-  }
-
-  /* ===== SETTINGS ===== */
-  .setting-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .setting-row:last-child { border-bottom: none; }
-  .setting-label { font-size: 17px; font-weight: 700; color: var(--text); }
-  .setting-sub { font-size: 13px; color: var(--text3); margin-top: 2px; }
-
-  @media (max-width: 400px) {
-    .form-row-3 { grid-template-columns: 1fr 1fr; }
-    .stats-grid { grid-template-columns: 1fr 1fr; }
-  }
+  /* TOAST */
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--green);color:#000;font-family:var(--font-display);font-size:16px;font-weight:800;padding:14px 28px;border-radius:50px;opacity:0;transition:all 0.3s;z-index:9998;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,0.5);}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
 </head>
 <body>
 
-<!-- ===== HEADER ===== -->
-<header class="app-header">
-  <div class="header-left">
-    <div class="app-title">ATOTONILCO</div>
-    <div class="app-subtitle" data-t="inventorySystem">Inventory System</div>
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">Connecting to database…</div>
+</div>
+
+<!-- PIN LOCK -->
+<div id="lock-screen" class="hidden">
+  <div class="lock-logo">ATOTONILCO</div>
+  <div class="lock-sub" id="lock-subtitle">Inventory System</div>
+  <div class="lock-icon">🔒</div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="dot-0"></div><div class="pin-dot" id="dot-1"></div>
+    <div class="pin-dot" id="dot-2"></div><div class="pin-dot" id="dot-3"></div>
   </div>
-  <div class="lang-toggle">
-    <button class="lang-btn active" onclick="setLang('en')" id="btn-en">EN</button>
-    <button class="lang-btn" onclick="setLang('es')" id="btn-es">ES</button>
+  <div class="pin-keypad">
+    <button class="pin-key" onclick="pinPress('1')">1</button><button class="pin-key" onclick="pinPress('2')">2</button><button class="pin-key" onclick="pinPress('3')">3</button>
+    <button class="pin-key" onclick="pinPress('4')">4</button><button class="pin-key" onclick="pinPress('5')">5</button><button class="pin-key" onclick="pinPress('6')">6</button>
+    <button class="pin-key" onclick="pinPress('7')">7</button><button class="pin-key" onclick="pinPress('8')">8</button><button class="pin-key" onclick="pinPress('9')">9</button>
+    <div class="pin-key empty"></div><button class="pin-key" onclick="pinPress('0')">0</button><button class="pin-key del" onclick="pinDel()">⌫</button>
   </div>
-</header>
+  <div class="pin-error-msg" id="pin-error"></div>
+  <div class="pin-hint" id="pin-hint">Enter your 4-digit PIN<br>Default: 1234 — change in Settings</div>
+</div>
 
-<!-- ===== TAB BAR ===== -->
-<nav class="tab-bar">
-  <button class="tab-item active" onclick="showTab('dash')" id="tab-dash">
-    <span class="tab-icon">📊</span>
-    <span data-t="dashboard">Dashboard</span>
-  </button>
-  <button class="tab-item" onclick="showTab('log')" id="tab-log">
-    <span class="tab-icon">📋</span>
-    <span data-t="logRun">Log Run</span>
-  </button>
-  <button class="tab-item" onclick="showTab('receive')" id="tab-receive">
-    <span class="tab-icon">📦</span>
-    <span data-t="receive">Receive</span>
-  </button>
-  <button class="tab-item" onclick="showTab('history')" id="tab-history">
-    <span class="tab-icon">🕘</span>
-    <span data-t="history">History</span>
-  </button>
-</nav>
-
-<!-- ===== MAIN CONTENT ===== -->
-<main class="main">
-
-  <!-- ===== DASHBOARD PANEL ===== -->
-  <div class="panel active" id="panel-dash">
-
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-value" id="stat-total-cases">—</div>
-        <div class="stat-label" data-t="casesThisWeek">Cases This Week</div>
+<!-- APP -->
+<div id="app-content" style="display:none;">
+  <header class="app-header">
+    <div>
+      <div class="app-title">ATOTONILCO</div>
+      <div class="app-subtitle" data-t="inventorySystem">Inventory System</div>
+    </div>
+    <div class="header-right">
+      <div class="sync-indicator" id="sync-indicator">⏳ Connecting</div>
+      <button class="lock-btn" onclick="lockApp()">🔒</button>
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="setLang('en')" id="btn-en">EN</button>
+        <button class="lang-btn" onclick="setLang('es')" id="btn-es">ES</button>
       </div>
-      <div class="stat-card">
-        <div class="stat-value" id="stat-runs">—</div>
-        <div class="stat-label" data-t="runsThisWeek">Runs This Week</div>
+    </div>
+  </header>
+
+  <nav class="tab-bar">
+    <button class="tab-item active" onclick="showTab('dash')" id="tab-dash"><span class="tab-icon">📊</span><span data-t="dashboard">Dashboard</span></button>
+    <button class="tab-item" onclick="showTab('log')" id="tab-log"><span class="tab-icon">📋</span><span data-t="logRun">Log Run</span></button>
+    <button class="tab-item" onclick="showTab('receive')" id="tab-receive"><span class="tab-icon">📦</span><span data-t="receive">Receive</span></button>
+    <button class="tab-item" onclick="showTab('history')" id="tab-history"><span class="tab-icon">🕘</span><span data-t="history">History</span></button>
+    <button class="tab-item" onclick="showTab('export')" id="tab-export"><span class="tab-icon">📤</span><span data-t="export">Export</span></button>
+    <button class="tab-item" onclick="showTab('settings')" id="tab-settings"><span class="tab-icon">⚙️</span><span data-t="settings">Settings</span></button>
+  </nav>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dash">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value" id="stat-total-cases">—</div><div class="stat-label" data-t="casesThisWeek">Cases This Week</div></div>
+        <div class="stat-card"><div class="stat-value" id="stat-runs">—</div><div class="stat-label" data-t="runsThisWeek">Runs This Week</div></div>
+        <div class="stat-card"><div class="stat-value" id="stat-flour-used">—</div><div class="stat-label" data-t="flourUsedLbs">Flour Used (lbs)</div></div>
+        <div class="stat-card"><div class="stat-value" id="stat-flour-ratio">—</div><div class="stat-label" data-t="lbsPerCase">Avg lbs/Case</div></div>
       </div>
-      <div class="stat-card">
-        <div class="stat-value" id="stat-flour-used">—</div>
-        <div class="stat-label" data-t="flourUsedLbs">Flour Used (lbs)</div>
+      <div class="card">
+        <div class="card-title">📦 <span data-t="currentInventory">Current Inventory</span></div>
+        <div id="inventory-levels"></div>
       </div>
-      <div class="stat-card">
-        <div class="stat-value" id="stat-flour-ratio">—</div>
-        <div class="stat-label" data-t="lbsPerCase">Avg lbs/Case</div>
+      <div class="card">
+        <div class="card-title">🕘 <span data-t="recentRuns">Recent Runs</span></div>
+        <div id="recent-runs-list"></div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">📦 <span data-t="currentInventory">Current Inventory</span></div>
-      <div id="inventory-levels">
-        <!-- Populated by JS -->
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">🕘 <span data-t="recentRuns">Recent Runs</span></div>
-      <div id="recent-runs-list">
-        <div class="empty-state">
-          <div class="empty-icon">📋</div>
-          <div class="empty-text" data-t="noRuns">No runs logged yet</div>
-          <div class="empty-sub" data-t="tapLogRun">Tap "Log Run" to get started</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== LOG RUN PANEL ===== -->
-  <div class="panel" id="panel-log">
-    <div class="card">
-      <div class="card-title">📋 <span data-t="logProductionRun">Log Production Run</span></div>
-
-      <div class="form-row-2">
-        <div class="form-group">
-          <label data-t="date">Date</label>
-          <input type="date" id="run-date">
-        </div>
-        <div class="form-group">
-          <label data-t="shift">Shift</label>
-          <select id="run-shift">
-            <option value="morning" data-t-opt="morning">Morning</option>
-            <option value="afternoon" data-t-opt="afternoon">Afternoon</option>
-            <option value="night" data-t-opt="night">Night</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label data-t="operator">Operator</label>
-        <input type="text" id="run-operator" placeholder="—">
-      </div>
-
-      <hr class="section-divider">
-      <div class="section-label" data-t="ingredientsUsed">Ingredients Used (Total for Entire Run)</div>
-
-      <div class="form-row-2">
-        <div class="form-group">
-          <label data-t="flourLbs">Flour (lbs)</label>
-          <input type="number" inputmode="decimal" id="ing-flour" value="" placeholder="0" oninput="updateSummary()">
-        </div>
-        <div class="form-group">
-          <label data-t="waterLbs">Water (lbs)</label>
-          <input type="number" inputmode="decimal" id="ing-water" value="" placeholder="0">
-        </div>
-      </div>
-      <div class="form-row-2">
-        <div class="form-group">
-          <label data-t="saltLbs">Salt (lbs)</label>
-          <input type="number" inputmode="decimal" id="ing-salt" value="" placeholder="0">
-        </div>
-        <div class="form-group">
-          <label data-t="lardLbs">Lard (lbs)</label>
-          <input type="number" inputmode="decimal" id="ing-lard" value="" placeholder="0">
-        </div>
-      </div>
-      <div class="form-group">
-        <label data-t="otherIngredients">Other Ingredients (optional)</label>
-        <input type="text" id="ing-other" placeholder="e.g. Baking powder 2 lbs">
-      </div>
-
-      <hr class="section-divider">
-      <div class="section-label" data-t="itemsProduced">Items Produced This Run</div>
-
-      <div id="items-container"></div>
-
-      <button class="btn-add-item" onclick="addItem()" id="btn-add-item">
-        + <span data-t="addItem">Add Item</span>
-      </button>
-
-      <div class="summary-box" id="run-summary">
-        <div class="summary-title" data-t="runSummary">Run Summary</div>
-        <div class="summary-row">
-          <span data-t="totalCases">Total Cases</span>
-          <span id="sum-cases">—</span>
-        </div>
-        <div class="summary-row">
-          <span data-t="totalFlour">Total Flour</span>
-          <span id="sum-flour">—</span>
-        </div>
-        <div class="summary-row">
-          <span data-t="flourPerCase">Flour / Case</span>
-          <span id="sum-ratio">—</span>
-        </div>
-      </div>
-
-      <div class="form-group" style="margin-top:14px;">
-        <label data-t="notes">Notes</label>
-        <textarea id="run-notes" placeholder="—"></textarea>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn" onclick="saveRun()" data-t="saveRun">Save Run</button>
-        <button class="btn btn-secondary" onclick="clearRun()" data-t="clear">Clear</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== RECEIVE INVENTORY PANEL ===== -->
-  <div class="panel" id="panel-receive">
-    <div class="card">
-      <div class="card-title">📦 <span data-t="receiveInventory">Receive Inventory</span></div>
-
-      <div class="form-row-2">
-        <div class="form-group">
-          <label data-t="date">Date</label>
-          <input type="date" id="recv-date">
-        </div>
-        <div class="form-group">
-          <label data-t="supplier">Supplier</label>
-          <input type="text" id="recv-supplier" placeholder="—">
-        </div>
-      </div>
-
-      <div class="section-label" data-t="itemsReceived">Items Received</div>
-
-      <div class="receive-item">
+    <!-- LOG RUN -->
+    <div class="panel" id="panel-log">
+      <div class="card">
+        <div class="card-title">📋 <span data-t="logProductionRun">Log Production Run</span></div>
         <div class="form-row-2">
-          <div class="form-group">
-            <label data-t="flourLbs">Flour (lbs)</label>
-            <input type="number" inputmode="decimal" id="recv-flour" placeholder="0">
-          </div>
-          <div class="form-group">
-            <label data-t="bags">Bags / Units</label>
-            <input type="number" inputmode="numeric" id="recv-flour-bags" placeholder="0">
+          <div class="form-group"><label data-t="date">Date</label><input type="date" id="run-date"></div>
+          <div class="form-group"><label data-t="shift">Shift</label>
+            <select id="run-shift">
+              <option value="morning" data-t-opt="morning">Morning</option>
+              <option value="afternoon" data-t-opt="afternoon">Afternoon</option>
+              <option value="night" data-t-opt="night">Night</option>
+            </select>
           </div>
         </div>
-      </div>
+        <div class="form-group"><label data-t="operator">Operator</label><input type="text" id="run-operator" placeholder="—"></div>
+        <hr class="section-divider">
+        <div class="section-label" data-t="ingredientsUsed">Ingredients Used — Total for Entire Run</div>
 
-      <div class="receive-item">
+        <!-- FLOUR -->
+        <div class="ing-row"><div class="ing-row-header"><span class="ing-name" data-t="ingFlour">Flour</span><span class="ing-unit-badge">lbs</span></div>
+          <div class="form-row-2"><div class="form-group"><label data-t="quantityLbs">Quantity (lbs)</label><input type="number" inputmode="decimal" id="ing-flour" placeholder="0" oninput="updateSummary()"></div><div class="form-group"><label data-t="lotNumber">Lot Number</label><input type="text" id="lot-flour" placeholder="LOT-XXXX"></div></div></div>
+        <!-- WATER -->
+        <div class="ing-row"><div class="ing-row-header"><span class="ing-name" data-t="ingWater">Water</span><span class="ing-unit-badge">lbs</span></div>
+          <div class="form-group"><label data-t="quantityLbs">Quantity (lbs)</label><input type="number" inputmode="decimal" id="ing-water" placeholder="0"></div></div>
+        <!-- OIL -->
+        <div class="ing-row"><div class="ing-row-header"><span class="ing-name" data-t="ingOil">Oil (50 lb case)</span><span class="ing-unit-badge" data-t="unitLot">Lot #</span></div>
+          <div class="form-row-2"><div class="form-group"><label data-t="quantityCases">Cases Used</label><input type="number" inputmode="decimal" id="ing-oil" placeholder="0"></div><div class="form-group"><label data-t="lotNumber">Lot Number</label><input type="text" id="lot-oil" placeholder="LOT-XXXX"></div></div></div>
+        <!-- CALCIUM P -->
+        <div class="ing-row"><div class="ing-row-header"><span class="ing-name" data-t="ingCalcium">Calcium Propionate</span><span class="ing-unit-badge" data-t="unitLot">Lot #</span></div>
+          <div class="form-row-2"><div class="form-group"><label data-t="quantity">Quantity</label><input type="number" inputmode="decimal" id="ing-calciump" placeholder="0"></div><div class="form-group"><label data-t="lotNumber">Lot Number</label><input type="text" id="lot-calciump" placeholder="LOT-XXXX"></div></div></div>
+        <!-- SODIUM P -->
+        <div class="ing-row"><div class="ing-row-header"><span class="ing-name" data-t="ingSodium">Sodium Propionate</span><span class="ing-unit-badge" data-t="unitLot">Lot #</span></div>
+          <div class="form-row-2"><div class="form-group"><label data-t="quantity">Quantity</label><input type="number" inputmode="decimal" id="ing-sodiump" placeholder="0"></div><div class="form-group"><label data-t="lotNumber">Lot Number</label><input type="text" id="lot-sodiump" placeholder="LOT-XXXX"></div></div></div>
+        <!-- BAKING P -->
+        <div class="ing-row"><div class="ing-row-header"><span class="ing-name" data-t="ingBaking">Baking Powder</span><span class="ing-unit-badge" data-t="unitLot">Lot #</span></div>
+          <div class="form-row-2"><div class="form-group"><label data-t="quantity">Quantity</label><input type="number" inputmode="decimal" id="ing-bakingp" placeholder="0"></div><div class="form-group"><label data-t="lotNumber">Lot Number</label><input type="text" id="lot-bakingp" placeholder="LOT-XXXX"></div></div></div>
+        <!-- SALT -->
+        <div class="ing-row"><div class="ing-row-header"><span class="ing-name">Salt</span><span class="ing-unit-badge">lbs</span></div>
+          <div class="form-row-2"><div class="form-group"><label data-t="quantityLbs">Quantity (lbs)</label><input type="number" inputmode="decimal" id="ing-salt" placeholder="0"></div><div class="form-group"><label data-t="lotNumber">Lot Number</label><input type="text" id="lot-salt" placeholder="LOT-XXXX"></div></div></div>
+        <!-- FUMARIC -->
+        <div class="ing-row"><div class="ing-row-header"><span class="ing-name" data-t="ingFumaric">Fumaric Acid</span><span class="ing-unit-badge" data-t="unitLot">Lot #</span></div>
+          <div class="form-row-2"><div class="form-group"><label data-t="quantity">Quantity</label><input type="number" inputmode="decimal" id="ing-fumaric" placeholder="0"></div><div class="form-group"><label data-t="lotNumber">Lot Number</label><input type="text" id="lot-fumaric" placeholder="LOT-XXXX"></div></div></div>
+        <!-- GUAR -->
+        <div class="ing-row"><div class="ing-row-header"><span class="ing-name" data-t="ingGuar">Guar Gum</span><span class="ing-unit-badge" data-t="unitLot">Lot #</span></div>
+          <div class="form-row-2"><div class="form-group"><label data-t="quantity">Quantity</label><input type="number" inputmode="decimal" id="ing-guar" placeholder="0"></div><div class="form-group"><label data-t="lotNumber">Lot Number</label><input type="text" id="lot-guar" placeholder="LOT-XXXX"></div></div></div>
+        <!-- ENZYME -->
+        <div class="ing-row"><div class="ing-row-header"><span class="ing-name" data-t="ingEnzyme">Enzyme Blend</span><span class="ing-unit-badge" data-t="unitLot">Lot #</span></div>
+          <div class="form-row-2"><div class="form-group"><label data-t="quantity">Quantity</label><input type="number" inputmode="decimal" id="ing-enzyme" placeholder="0"></div><div class="form-group"><label data-t="lotNumber">Lot Number</label><input type="text" id="lot-enzyme" placeholder="LOT-XXXX"></div></div></div>
+        <!-- BETA -->
+        <div class="ing-row"><div class="ing-row-header"><span class="ing-name" data-t="ingBeta">Beta Tablets</span><span class="ing-unit-badge">Tablets</span></div>
+          <div class="form-row-2"><div class="form-group"><label>Quantity (tablets)</label><input type="number" inputmode="numeric" id="ing-beta" placeholder="0"></div><div class="form-group"><label data-t="lotNumber">Lot Number</label><input type="text" id="lot-beta" placeholder="LOT-XXXX"></div></div></div>
+        <!-- GORDITA BAGS -->
+        <div class="ing-row"><div class="ing-row-header"><span class="ing-name" data-t="ingGordita">Gordita Bags</span><span class="ing-unit-badge">Bags</span></div>
+          <div class="form-group"><label>Quantity (bags)</label><input type="number" inputmode="numeric" id="ing-gordita" placeholder="0"></div></div>
+        <!-- OTHER -->
+        <div class="form-group" style="margin-top:8px;"><label data-t="otherIngredients">Other / Notes</label><input type="text" id="ing-other" placeholder="—"></div>
+
+        <hr class="section-divider">
+        <div class="section-label" data-t="itemsProduced">Items Produced This Run</div>
+        <div id="items-container"></div>
+        <button class="btn-add-item" onclick="addItem()">+ <span data-t="addItem">Add Item</span></button>
+
+        <div class="summary-box">
+          <div class="summary-title" data-t="runSummary">Run Summary</div>
+          <div class="summary-row"><span data-t="totalCases">Total Cases</span><span id="sum-cases">—</span></div>
+          <div class="summary-row"><span data-t="totalFlour">Total Flour</span><span id="sum-flour">—</span></div>
+          <div class="summary-row"><span data-t="flourPerCase">Flour / Case</span><span id="sum-ratio">—</span></div>
+        </div>
+        <div class="form-group" style="margin-top:14px;"><label data-t="notes">Notes</label><textarea id="run-notes" placeholder="—"></textarea></div>
+        <div class="btn-row">
+          <button class="btn" onclick="saveRun()" data-t="saveRun">Save Run</button>
+          <button class="btn btn-secondary" onclick="clearRun()" data-t="clear">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECEIVE -->
+    <div class="panel" id="panel-receive">
+      <div class="card">
+        <div class="card-title">📦 <span data-t="receiveInventory">Receive Inventory</span></div>
         <div class="form-row-2">
-          <div class="form-group">
-            <label data-t="lardLbs">Lard (lbs)</label>
-            <input type="number" inputmode="decimal" id="recv-lard" placeholder="0">
+          <div class="form-group"><label data-t="date">Date</label><input type="date" id="recv-date"></div>
+          <div class="form-group"><label data-t="supplier">Supplier</label><input type="text" id="recv-supplier" placeholder="—"></div>
+        </div>
+        <div class="form-group"><label data-t="poNumber">PO / Reference #</label><input type="text" id="recv-po" placeholder="—"></div>
+        <hr class="section-divider">
+        <div class="section-label" data-t="itemsReceived">Items Received</div>
+        <div class="ing-row">
+          <div class="ing-name" style="margin-bottom:10px;" data-t="ingFlour">Flour</div>
+          <div class="form-row-3">
+            <div class="form-group"><label>lbs</label><input type="number" inputmode="decimal" id="recv-flour-lbs" placeholder="0"></div>
+            <div class="form-group"><label data-t="bags">Bags</label><input type="number" inputmode="numeric" id="recv-flour-bags" placeholder="0"></div>
+            <div class="form-group"><label data-t="lotNumber">Lot #</label><input type="text" id="recv-flour-lot" placeholder="LOT"></div>
           </div>
-          <div class="form-group">
-            <label data-t="units">Units</label>
-            <input type="number" inputmode="numeric" id="recv-lard-units" placeholder="0">
+        </div>
+        <div class="ing-row">
+          <div class="ing-name" style="margin-bottom:10px;" data-t="ingOil">Oil (50 lb case)</div>
+          <div class="form-row-2">
+            <div class="form-group"><label data-t="cases">Cases</label><input type="number" inputmode="decimal" id="recv-oil" placeholder="0"></div>
+            <div class="form-group"><label data-t="lotNumber">Lot #</label><input type="text" id="recv-oil-lot" placeholder="LOT"></div>
+          </div>
+        </div>
+        <div class="ing-row">
+          <div class="ing-name" style="margin-bottom:10px;" data-t="ingBeta">Beta Tablets</div>
+          <div class="form-row-2">
+            <div class="form-group"><label>Tablets</label><input type="number" inputmode="numeric" id="recv-beta" placeholder="0"></div>
+            <div class="form-group"><label data-t="lotNumber">Lot #</label><input type="text" id="recv-beta-lot" placeholder="LOT"></div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:8px;"><label>Other Items Received</label><textarea id="recv-other" placeholder="Item, qty, lot#…"></textarea></div>
+        <div class="form-group"><label data-t="notes">Notes</label><input type="text" id="recv-notes" placeholder="—"></div>
+        <button class="btn btn-green" onclick="saveReceival()" data-t="saveReceival">Save Receipt</button>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="panel" id="panel-history">
+      <div class="card">
+        <div class="card-title">🕘 <span data-t="productionHistory">Production History</span></div>
+        <div class="filter-bar" id="hist-filter-bar">
+          <button class="filter-btn active" onclick="setHistFilter('all',this)" data-t="filterAll">All</button>
+          <button class="filter-btn" onclick="setHistFilter('today',this)" data-t="filterToday">Today</button>
+          <button class="filter-btn" onclick="setHistFilter('week',this)" data-t="filterWeek">This Week</button>
+          <button class="filter-btn" onclick="setHistFilter('month',this)" data-t="filterMonth">This Month</button>
+        </div>
+        <div class="log-wrapper">
+          <table class="log-table"><thead><tr>
+            <th data-t="date">Date</th><th data-t="shift">Shift</th><th data-t="operator">Operator</th>
+            <th data-t="itemsProducedShort">Items</th><th data-t="totalCases">Cases</th>
+            <th data-t="flourLbs">Flour (lbs)</th><th>lbs/case</th>
+          </tr></thead><tbody id="history-body"></tbody></table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📦 <span data-t="receiptHistory">Receipt History</span></div>
+        <div class="log-wrapper">
+          <table class="log-table"><thead><tr>
+            <th data-t="date">Date</th><th data-t="supplier">Supplier</th>
+            <th>PO #</th><th>Flour (lbs)</th><th>Flour Lot</th>
+          </tr></thead><tbody id="receipt-body"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="panel" id="panel-export">
+      <div class="card">
+        <div class="card-title">📤 <span data-t="exportData">Export Data</span></div>
+        <p style="color:var(--text2);font-size:14px;margin-bottom:16px;line-height:1.6;" data-t="exportDesc">Download as Excel (.xlsx). Free — opens in Microsoft Excel, Google Sheets, or any spreadsheet app.</p>
+        <div class="export-option">
+          <div class="export-title" data-t="exportRuns">Production Runs</div>
+          <div class="export-desc" data-t="exportRunsDesc">All ingredients, lot numbers, items produced, and flour-per-case ratios.</div>
+          <div class="export-btn-row">
+            <button class="export-btn" onclick="exportRuns('today')">📅 Today</button>
+            <button class="export-btn" onclick="exportRuns('week')">📅 This Week</button>
+            <button class="export-btn" onclick="exportRuns('month')">📅 This Month</button>
+            <button class="export-btn blue" onclick="exportRuns('all')">All Time</button>
+          </div>
+        </div>
+        <div class="export-option">
+          <div class="export-title" data-t="exportReceipts">Receipts</div>
+          <div class="export-desc" data-t="exportReceiptsDesc">All incoming deliveries with supplier, lot numbers, and quantities.</div>
+          <div class="export-btn-row">
+            <button class="export-btn" onclick="exportReceipts('today')">📅 Today</button>
+            <button class="export-btn" onclick="exportReceipts('week')">📅 This Week</button>
+            <button class="export-btn" onclick="exportReceipts('month')">📅 This Month</button>
+            <button class="export-btn blue" onclick="exportReceipts('all')">All Time</button>
+          </div>
+        </div>
+        <div class="export-option">
+          <div class="export-title" data-t="exportFull">Full Report</div>
+          <div class="export-desc" data-t="exportFullDesc">Both runs and receipts in one Excel file with two sheets.</div>
+          <div class="export-btn-row">
+            <button class="export-btn" onclick="exportFull('month')">📅 This Month</button>
+            <button class="export-btn blue" onclick="exportFull('all')">All Time</button>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="receive-item">
-        <div class="form-row-2">
-          <div class="form-group">
-            <label data-t="saltLbs">Salt (lbs)</label>
-            <input type="number" inputmode="decimal" id="recv-salt" placeholder="0">
-          </div>
-          <div class="form-group">
-            <label data-t="units">Units</label>
-            <input type="number" inputmode="numeric" id="recv-salt-units" placeholder="0">
-          </div>
+    <!-- SETTINGS -->
+    <div class="panel" id="panel-settings">
+      <div class="card">
+        <div class="card-title">⚙️ <span data-t="settings">Settings</span></div>
+        <div class="setting-row" style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--border);">
+          <div><div style="font-size:17px;font-weight:700;" data-t="changePIN">Change PIN</div><div style="font-size:13px;color:var(--text3);" data-t="changePINSub">Update your 4-digit security PIN</div></div>
+          <button class="btn btn-secondary" style="width:auto;padding:10px 18px;margin:0;font-size:14px;" onclick="startChangePIN()" data-t="change">Change</button>
+        </div>
+        <div class="setting-row" style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--border);">
+          <div><div style="font-size:17px;font-weight:700;" data-t="clearAllData">Clear All Local Data</div><div style="font-size:13px;color:var(--text3);" data-t="clearAllDataSub">Does not delete Supabase data</div></div>
+          <button class="btn" style="width:auto;padding:10px 18px;margin:0;font-size:14px;background:var(--red);color:#fff;" onclick="clearLocalData()" data-t="clearData">Clear</button>
+        </div>
+        <div class="setting-row" style="padding:16px 0;">
+          <div><div style="font-size:17px;font-weight:700;" data-t="appVersion">Version</div><div style="font-size:13px;color:var(--text3);">v3.0 — Feb 2026 · inventory-system · Supabase enabled</div></div>
         </div>
       </div>
-
-      <div class="form-group">
-        <label data-t="poNumber">PO / Reference #</label>
-        <input type="text" id="recv-po" placeholder="—">
-      </div>
-
-      <div class="form-group">
-        <label data-t="notes">Notes</label>
-        <textarea id="recv-notes" placeholder="—"></textarea>
-      </div>
-
-      <button class="btn" onclick="saveReceival()" data-t="saveReceival">Save Receipt</button>
-    </div>
-  </div>
-
-  <!-- ===== HISTORY PANEL ===== -->
-  <div class="panel" id="panel-history">
-    <div class="card">
-      <div class="card-title">🕘 <span data-t="productionHistory">Production History</span></div>
-      <div class="log-wrapper">
-        <table class="log-table" id="history-table">
-          <thead>
-            <tr>
-              <th data-t="date">Date</th>
-              <th data-t="shift">Shift</th>
-              <th data-t="itemsProducedShort">Items</th>
-              <th data-t="totalCases">Cases</th>
-              <th data-t="flourLbs">Flour (lbs)</th>
-              <th data-t="lbsPerCase">lbs/case</th>
-            </tr>
-          </thead>
-          <tbody id="history-body">
-            <tr>
-              <td colspan="6">
-                <div class="empty-state">
-                  <div class="empty-icon">📋</div>
-                  <div class="empty-text" data-t="noRuns">No runs logged yet</div>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="card">
+        <div class="card-title">☁️ <span>Database Status</span></div>
+        <div id="db-status-box" style="font-size:15px;color:var(--text2);line-height:1.7;"></div>
       </div>
     </div>
 
-    <div class="card" style="margin-top:16px;">
-      <div class="card-title">📦 <span data-t="receiptHistory">Receipt History</span></div>
-      <div class="log-wrapper">
-        <table class="log-table">
-          <thead>
-            <tr>
-              <th data-t="date">Date</th>
-              <th data-t="supplier">Supplier</th>
-              <th data-t="flourLbs">Flour (lbs)</th>
-              <th data-t="lardLbs">Lard (lbs)</th>
-              <th data-t="saltLbs">Salt (lbs)</th>
-            </tr>
-          </thead>
-          <tbody id="receipt-body">
-            <tr>
-              <td colspan="5">
-                <div class="empty-state">
-                  <div class="empty-icon">📦</div>
-                  <div class="empty-text" data-t="noReceipts">No receipts logged yet</div>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+  </main>
+</div><!-- end app-content -->
 
-</main>
-
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
+// ============================================================
+// SUPABASE API HELPER
+// Uses fetch directly — no SDK needed, works in any browser
+// ============================================================
+const SB = {
+  headers: {
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_ANON,
+    'Authorization': 'Bearer ' + SUPABASE_ANON,
+    'Prefer': 'return=representation'
+  },
+  async get(table, params = '') {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?order=created_at.desc${params}`, { headers: this.headers });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  async insert(table, data) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+      method: 'POST', headers: this.headers, body: JSON.stringify(data)
+    });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  async upsert(table, data) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+      method: 'POST', headers: { ...this.headers, 'Prefer': 'resolution=merge-duplicates,return=representation' },
+      body: JSON.stringify(data)
+    });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  async getInventory() {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/inventory?limit=1`, { headers: this.headers });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d[0] || null;
+  },
+  async updateInventory(data) {
+    // Upsert the single inventory row (id=1)
+    return this.upsert('inventory', { id: 1, ...data, updated_at: new Date().toISOString() });
+  }
+};
+
 // ============================================================
 // TRANSLATIONS
 // ============================================================
 const T = {
   en: {
-    inventorySystem: "Inventory System",
-    dashboard: "Dashboard",
-    logRun: "Log Run",
-    receive: "Receive",
-    history: "History",
-    casesThisWeek: "Cases This Week",
-    runsThisWeek: "Runs This Week",
-    flourUsedLbs: "Flour Used (lbs)",
-    lbsPerCase: "lbs / Case",
-    currentInventory: "Current Inventory",
-    recentRuns: "Recent Runs",
-    noRuns: "No runs logged yet",
-    tapLogRun: 'Tap "Log Run" to get started',
-    logProductionRun: "Log Production Run",
-    date: "Date",
-    shift: "Shift",
-    morning: "Morning",
-    afternoon: "Afternoon",
-    night: "Night",
-    operator: "Operator",
-    ingredientsUsed: "Ingredients Used (Total for Entire Run)",
-    flourLbs: "Flour (lbs)",
-    waterLbs: "Water (lbs)",
-    saltLbs: "Salt (lbs)",
-    lardLbs: "Lard (lbs)",
-    otherIngredients: "Other Ingredients (optional)",
-    itemsProduced: "Items Produced This Run",
-    itemsProducedShort: "Items",
-    addItem: "Add Item",
-    runSummary: "Run Summary",
-    totalCases: "Total Cases",
-    totalFlour: "Total Flour",
-    flourPerCase: "Flour / Case",
-    notes: "Notes",
-    saveRun: "Save Run",
-    clear: "Clear",
-    receiveInventory: "Receive Inventory",
-    supplier: "Supplier",
-    itemsReceived: "Items Received",
-    bags: "Bags / Units",
-    units: "Units",
-    poNumber: "PO / Reference #",
-    saveReceival: "Save Receipt",
-    productionHistory: "Production History",
-    receiptHistory: "Receipt History",
-    noReceipts: "No receipts logged yet",
-    itemLabel: "Item",
-    casesProduced: "Cases Produced",
-    runSaved: "✓ Run saved!",
-    receiptSaved: "✓ Receipt saved!",
-    flourStock: "Flour",
-    lardStock: "Lard",
-    saltStock: "Salt",
+    inventorySystem:'Inventory System',dashboard:'Dashboard',logRun:'Log Run',
+    receive:'Receive',history:'History',export:'Export',settings:'Settings',
+    casesThisWeek:'Cases This Week',runsThisWeek:'Runs This Week',
+    flourUsedLbs:'Flour Used (lbs)',lbsPerCase:'Avg lbs/Case',
+    currentInventory:'Current Inventory',recentRuns:'Recent Runs',
+    noRuns:'No runs logged yet',tapLogRun:'Tap "Log Run" to get started',
+    logProductionRun:'Log Production Run',date:'Date',shift:'Shift',
+    morning:'Morning',afternoon:'Afternoon',night:'Night',operator:'Operator',
+    ingredientsUsed:'Ingredients Used — Total for Entire Run',
+    ingFlour:'Flour',ingWater:'Water',ingOil:'Oil (50 lb case)',
+    ingCalcium:'Calcium Propionate',ingSodium:'Sodium Propionate',
+    ingBaking:'Baking Powder',ingFumaric:'Fumaric Acid',
+    ingGuar:'Guar Gum',ingEnzyme:'Enzyme Blend',
+    ingBeta:'Beta Tablets',ingGordita:'Gordita Bags',
+    quantity:'Quantity',quantityLbs:'Quantity (lbs)',quantityCases:'Cases Used',
+    lotNumber:'Lot Number',flourLbs:'Flour (lbs)',
+    otherIngredients:'Other / Notes',
+    itemsProduced:'Items Produced This Run',itemsProducedShort:'Items',
+    addItem:'Add Item',runSummary:'Run Summary',totalCases:'Total Cases',
+    totalFlour:'Total Flour',flourPerCase:'Flour / Case',notes:'Notes',
+    saveRun:'Save Run',clear:'Clear',
+    receiveInventory:'Receive Inventory',supplier:'Supplier',
+    itemsReceived:'Items Received',bags:'Bags',cases:'Cases',
+    poNumber:'PO / Reference #',saveReceival:'Save Receipt',
+    productionHistory:'Production History',receiptHistory:'Receipt History',
+    noReceipts:'No receipts logged yet',
+    filterAll:'All',filterToday:'Today',filterWeek:'This Week',filterMonth:'This Month',
+    exportData:'Export Data',
+    exportDesc:'Download as Excel (.xlsx). Free — opens in Microsoft Excel, Google Sheets, or any spreadsheet app.',
+    exportRuns:'Production Runs',exportRunsDesc:'All ingredients, lot numbers, items produced, and flour-per-case ratios.',
+    exportReceipts:'Receipts',exportReceiptsDesc:'All incoming deliveries with supplier, lot numbers, and quantities.',
+    exportFull:'Full Report',exportFullDesc:'Both runs and receipts in one Excel file with two sheets.',
+    changePIN:'Change PIN',changePINSub:'Update your 4-digit security PIN',
+    change:'Change',clearAllData:'Clear All Local Data',clearAllDataSub:'Does not delete Supabase data',
+    clearData:'Clear',appVersion:'Version',
+    itemLabel:'Item',casesProduced:'Cases Produced',
+    runSaved:'✓ Run saved to cloud!',receiptSaved:'✓ Receipt saved to cloud!',
+    flourStock:'Flour',oilStock:'Oil',betaStock:'Beta Tablets',
   },
   es: {
-    inventorySystem: "Sistema de Inventario",
-    dashboard: "Inicio",
-    logRun: "Registrar",
-    receive: "Recibir",
-    history: "Historial",
-    casesThisWeek: "Cajas Esta Semana",
-    runsThisWeek: "Corridas Esta Semana",
-    flourUsedLbs: "Harina Usada (lbs)",
-    lbsPerCase: "lbs / Caja",
-    currentInventory: "Inventario Actual",
-    recentRuns: "Corridas Recientes",
-    noRuns: "Sin corridas registradas",
-    tapLogRun: 'Toque "Registrar" para comenzar',
-    logProductionRun: "Registrar Corrida de Producción",
-    date: "Fecha",
-    shift: "Turno",
-    morning: "Mañana",
-    afternoon: "Tarde",
-    night: "Noche",
-    operator: "Operador",
-    ingredientsUsed: "Ingredientes Usados (Total de la Corrida)",
-    flourLbs: "Harina (lbs)",
-    waterLbs: "Agua (lbs)",
-    saltLbs: "Sal (lbs)",
-    lardLbs: "Manteca (lbs)",
-    otherIngredients: "Otros Ingredientes (opcional)",
-    itemsProduced: "Artículos Producidos en Esta Corrida",
-    itemsProducedShort: "Artículos",
-    addItem: "Agregar Artículo",
-    runSummary: "Resumen de Corrida",
-    totalCases: "Total de Cajas",
-    totalFlour: "Total de Harina",
-    flourPerCase: "Harina / Caja",
-    notes: "Notas",
-    saveRun: "Guardar Corrida",
-    clear: "Limpiar",
-    receiveInventory: "Recibir Inventario",
-    supplier: "Proveedor",
-    itemsReceived: "Artículos Recibidos",
-    bags: "Bolsas / Unidades",
-    units: "Unidades",
-    poNumber: "# de Orden / Referencia",
-    saveReceival: "Guardar Recibo",
-    productionHistory: "Historial de Producción",
-    receiptHistory: "Historial de Recibos",
-    noReceipts: "Sin recibos registrados",
-    itemLabel: "Artículo",
-    casesProduced: "Cajas Producidas",
-    runSaved: "✓ ¡Corrida guardada!",
-    receiptSaved: "✓ ¡Recibo guardado!",
-    flourStock: "Harina",
-    lardStock: "Manteca",
-    saltStock: "Sal",
+    inventorySystem:'Sistema de Inventario',dashboard:'Inicio',logRun:'Registrar',
+    receive:'Recibir',history:'Historial',export:'Exportar',settings:'Ajustes',
+    casesThisWeek:'Cajas Esta Semana',runsThisWeek:'Corridas Esta Semana',
+    flourUsedLbs:'Harina Usada (lbs)',lbsPerCase:'lbs / Caja',
+    currentInventory:'Inventario Actual',recentRuns:'Corridas Recientes',
+    noRuns:'Sin corridas registradas',tapLogRun:'Toque "Registrar" para comenzar',
+    logProductionRun:'Registrar Corrida de Producción',date:'Fecha',shift:'Turno',
+    morning:'Mañana',afternoon:'Tarde',night:'Noche',operator:'Operador',
+    ingredientsUsed:'Ingredientes Usados — Total de la Corrida',
+    ingFlour:'Harina',ingWater:'Agua',ingOil:'Aceite (caja 50 lbs)',
+    ingCalcium:'Propionato de Calcio',ingSodium:'Propionato de Sodio',
+    ingBaking:'Polvo para Hornear',ingFumaric:'Ácido Fumárico',
+    ingGuar:'Goma Guar',ingEnzyme:'Mezcla de Enzimas',
+    ingBeta:'Tabletas Beta',ingGordita:'Bolsas Gordita',
+    quantity:'Cantidad',quantityLbs:'Cantidad (lbs)',quantityCases:'Cajas Usadas',
+    lotNumber:'Número de Lote',flourLbs:'Harina (lbs)',
+    otherIngredients:'Otros / Notas',
+    itemsProduced:'Artículos Producidos Esta Corrida',itemsProducedShort:'Artículos',
+    addItem:'Agregar Artículo',runSummary:'Resumen de Corrida',totalCases:'Total Cajas',
+    totalFlour:'Total Harina',flourPerCase:'Harina / Caja',notes:'Notas',
+    saveRun:'Guardar Corrida',clear:'Limpiar',
+    receiveInventory:'Recibir Inventario',supplier:'Proveedor',
+    itemsReceived:'Artículos Recibidos',bags:'Bolsas',cases:'Cajas',
+    poNumber:'# de Orden / Referencia',saveReceival:'Guardar Recibo',
+    productionHistory:'Historial de Producción',receiptHistory:'Historial de Recibos',
+    noReceipts:'Sin recibos registrados',
+    filterAll:'Todo',filterToday:'Hoy',filterWeek:'Esta Semana',filterMonth:'Este Mes',
+    exportData:'Exportar Datos',
+    exportDesc:'Descarga en Excel. Gratis — abre en Microsoft Excel o Google Sheets.',
+    exportRuns:'Corridas de Producción',exportRunsDesc:'Ingredientes, lotes, artículos y ratios.',
+    exportReceipts:'Recibos',exportReceiptsDesc:'Entregas con proveedor y lotes.',
+    exportFull:'Reporte Completo',exportFullDesc:'Corridas y recibos en un archivo Excel con dos hojas.',
+    changePIN:'Cambiar PIN',changePINSub:'Actualizar PIN de seguridad de 4 dígitos',
+    change:'Cambiar',clearAllData:'Borrar Datos Locales',clearAllDataSub:'No borra datos de Supabase',
+    clearData:'Borrar',appVersion:'Versión',
+    itemLabel:'Artículo',casesProduced:'Cajas Producidas',
+    runSaved:'✓ ¡Corrida guardada en la nube!',receiptSaved:'✓ ¡Recibo guardado en la nube!',
+    flourStock:'Harina',oilStock:'Aceite',betaStock:'Tabletas Beta',
   }
 };
 
+// ============================================================
+// STATE
+// ============================================================
 let currentLang = 'en';
 let itemCount = 0;
 let runs = [];
 let receipts = [];
-let inventory = { flour: 5000, lard: 500, salt: 200 };
+let inventory = { flour_lbs: 0, oil_cases: 0, beta_count: 0 };
+let histFilter = 'all';
+let dbConnected = false;
+
+let storedPIN = localStorage.getItem('ato_pin') || '1234';
+let pinBuffer = '';
+let changingPIN = false;
+let newPINBuffer = '';
+
+// ============================================================
+// PIN
+// ============================================================
+function pinPress(digit) {
+  if (changingPIN) { handleChangePIN(digit); return; }
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += digit;
+  updateDots(pinBuffer.length, false);
+  if (pinBuffer.length === 4) setTimeout(checkPIN, 120);
+}
+function pinDel() {
+  if (changingPIN) { newPINBuffer = newPINBuffer.slice(0,-1); updateDots(newPINBuffer.length,false); return; }
+  pinBuffer = pinBuffer.slice(0,-1);
+  updateDots(pinBuffer.length, false);
+}
+function updateDots(count, error) {
+  for (let i=0;i<4;i++) {
+    document.getElementById('dot-'+i).className = 'pin-dot'+(i<count?(error?' error':' filled'):'');
+  }
+}
+function checkPIN() {
+  if (pinBuffer === storedPIN) {
+    document.getElementById('lock-screen').classList.add('hidden');
+    document.getElementById('app-content').style.display = 'block';
+    pinBuffer = '';
+  } else {
+    updateDots(4,true);
+    document.getElementById('pin-error').textContent = currentLang==='es'?'PIN incorrecto.':'Incorrect PIN. Try again.';
+    setTimeout(()=>{ pinBuffer=''; updateDots(0,false); document.getElementById('pin-error').textContent=''; },1200);
+  }
+}
+function lockApp() {
+  pinBuffer=''; changingPIN=false; newPINBuffer='';
+  updateDots(0,false);
+  document.getElementById('pin-error').textContent='';
+  document.getElementById('lock-screen').classList.remove('hidden');
+  document.getElementById('app-content').style.display='none';
+}
+function startChangePIN() {
+  changingPIN='new1'; newPINBuffer='';
+  document.getElementById('pin-hint').textContent = currentLang==='es'?'Ingrese su NUEVO PIN de 4 dígitos':'Enter your NEW 4-digit PIN';
+  document.getElementById('pin-error').textContent='';
+  updateDots(0,false);
+  lockApp();
+}
+function handleChangePIN(digit) {
+  if (newPINBuffer.length>=4) return;
+  newPINBuffer += digit;
+  updateDots(newPINBuffer.length, false);
+  if (newPINBuffer.length===4) {
+    if (changingPIN==='new1') {
+      const first = newPINBuffer;
+      setTimeout(()=>{ changingPIN='new2'; newPINBuffer=''; updateDots(0,false);
+        document.getElementById('pin-hint').textContent = currentLang==='es'?'Confirme su nuevo PIN':'Confirm your new PIN';
+        window._tmpPIN = first; },200);
+    } else {
+      setTimeout(()=>{
+        if (newPINBuffer===window._tmpPIN) {
+          storedPIN=newPINBuffer; localStorage.setItem('ato_pin',storedPIN);
+          changingPIN=false; newPINBuffer=''; pinBuffer='';
+          document.getElementById('lock-screen').classList.add('hidden');
+          document.getElementById('app-content').style.display='block';
+          showToast(currentLang==='es'?'✓ PIN actualizado':'✓ PIN updated');
+        } else {
+          updateDots(4,true);
+          document.getElementById('pin-error').textContent = currentLang==='es'?'Los PINs no coinciden.':'PINs do not match.';
+          setTimeout(()=>{ changingPIN='new1'; newPINBuffer=''; updateDots(0,false);
+            document.getElementById('pin-error').textContent='';
+            document.getElementById('pin-hint').textContent = currentLang==='es'?'Ingrese su NUEVO PIN de 4 dígitos':'Enter your NEW 4-digit PIN'; },1400);
+        }
+      },120);
+    }
+  }
+}
 
 // ============================================================
 // LANGUAGE
 // ============================================================
 function setLang(lang) {
-  currentLang = lang;
-  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
-  document.getElementById('btn-es').classList.toggle('active', lang === 'es');
-
-  // Update all data-t elements
-  document.querySelectorAll('[data-t]').forEach(el => {
-    const key = el.getAttribute('data-t');
-    if (T[lang][key]) el.textContent = T[lang][key];
-  });
-
-  // Update select options
-  document.querySelectorAll('[data-t-opt]').forEach(el => {
-    const key = el.getAttribute('data-t-opt');
-    if (T[lang][key]) el.textContent = T[lang][key];
-  });
-
-  // Update item entries
-  document.querySelectorAll('.item-label').forEach((el, i) => {
-    el.textContent = T[lang].itemLabel + ' ' + (i + 1);
-  });
-  document.querySelectorAll('.cases-label').forEach(el => {
-    el.textContent = T[lang].casesProduced;
-  });
-
-  // Update placeholders
-  refreshDashboard();
+  currentLang=lang;
+  document.getElementById('btn-en').classList.toggle('active',lang==='en');
+  document.getElementById('btn-es').classList.toggle('active',lang==='es');
+  document.querySelectorAll('[data-t]').forEach(el=>{const k=el.getAttribute('data-t');if(T[lang][k]!==undefined)el.textContent=T[lang][k];});
+  document.querySelectorAll('[data-t-opt]').forEach(el=>{const k=el.getAttribute('data-t-opt');if(T[lang][k])el.textContent=T[lang][k];});
+  document.querySelectorAll('.item-label').forEach((el,i)=>{el.textContent=T[lang].itemLabel+' '+(i+1);});
+  document.querySelectorAll('.cases-label').forEach(el=>{el.textContent=T[lang].casesProduced;});
+  refreshDashboard(); renderHistory();
 }
-
-function t(key) { return T[currentLang][key] || key; }
+function t(k){return T[currentLang][k]||k;}
 
 // ============================================================
 // TABS
 // ============================================================
 function showTab(id) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
-  document.getElementById('panel-' + id).classList.add('active');
-  document.getElementById('tab-' + id).classList.add('active');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  if (id==='settings') updateDbStatusBox();
 }
 
 // ============================================================
-// ITEMS (in production run)
+// ITEMS
 // ============================================================
-const PRODUCT_LIST = [
-  'Burrito #1', 'Burrito #2', 'Burrito #3',
-  'Other / Otro'
-];
-
+const PRODUCTS = ['Burrito #1','Burrito #2','Burrito #3','Gordita','Other / Otro'];
 function addItem() {
   itemCount++;
-  const container = document.getElementById('items-container');
-  const div = document.createElement('div');
-  div.className = 'item-entry';
-  div.id = 'item-' + itemCount;
-  div.innerHTML = `
-    <div class="item-entry-header">
-      <div class="item-num item-label">${t('itemLabel')} ${itemCount}</div>
-      <button class="remove-btn" onclick="removeItem(${itemCount})">✕</button>
-    </div>
-    <div class="form-group">
-      <label>${t('itemLabel')}</label>
-      <select class="item-select">
-        ${PRODUCT_LIST.map(p => `<option value="${p}">${p}</option>`).join('')}
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="cases-label">${t('casesProduced')}</label>
-      <input type="number" inputmode="numeric" class="item-cases" placeholder="0" oninput="updateSummary()">
-    </div>
-  `;
-  container.appendChild(div);
+  const div=document.createElement('div');
+  div.className='item-entry'; div.id='item-'+itemCount;
+  div.innerHTML=`<div class="item-entry-header"><div class="item-num item-label">${t('itemLabel')} ${itemCount}</div><button class="remove-btn" onclick="removeItem(${itemCount})">✕</button></div>
+  <div class="form-group"><label>${t('itemLabel')}</label><select class="item-select">${PRODUCTS.map(p=>`<option value="${p}">${p}</option>`).join('')}</select></div>
+  <div class="form-group"><label class="cases-label">${t('casesProduced')}</label><input type="number" inputmode="numeric" class="item-cases" placeholder="0" oninput="updateSummary()"></div>`;
+  document.getElementById('items-container').appendChild(div);
   updateSummary();
 }
-
-function removeItem(id) {
-  const el = document.getElementById('item-' + id);
-  if (el) el.remove();
-  // Renumber labels
-  document.querySelectorAll('.item-label').forEach((el, i) => {
-    el.textContent = t('itemLabel') + ' ' + (i + 1);
-  });
-  updateSummary();
-}
+function removeItem(id){const el=document.getElementById('item-'+id);if(el)el.remove();
+  document.querySelectorAll('.item-label').forEach((el,i)=>{el.textContent=t('itemLabel')+' '+(i+1);});updateSummary();}
 
 // ============================================================
-// SUMMARY CALCULATION
+// SUMMARY
 // ============================================================
 function updateSummary() {
-  const flour = parseFloat(document.getElementById('ing-flour').value) || 0;
-  let totalCases = 0;
-  document.querySelectorAll('.item-cases').forEach(inp => {
-    totalCases += parseFloat(inp.value) || 0;
-  });
-  const ratio = totalCases > 0 ? (flour / totalCases).toFixed(2) : '—';
-  document.getElementById('sum-cases').textContent = totalCases > 0 ? totalCases : '—';
-  document.getElementById('sum-flour').textContent = flour > 0 ? flour.toLocaleString() + ' lbs' : '—';
-  document.getElementById('sum-ratio').textContent = ratio !== '—' ? ratio + ' lbs/case' : '—';
+  const flour=parseFloat(document.getElementById('ing-flour').value)||0;
+  let total=0;
+  document.querySelectorAll('.item-cases').forEach(inp=>{total+=parseFloat(inp.value)||0;});
+  const ratio=total>0?(flour/total).toFixed(2):'—';
+  document.getElementById('sum-cases').textContent=total>0?total:'—';
+  document.getElementById('sum-flour').textContent=flour>0?flour.toLocaleString()+' lbs':'—';
+  document.getElementById('sum-ratio').textContent=ratio!=='—'?ratio+' lbs/case':'—';
 }
 
 // ============================================================
-// SAVE RUN
+// HELPERS
 // ============================================================
-function saveRun() {
-  const date = document.getElementById('run-date').value;
-  const shift = document.getElementById('run-shift').value;
-  const operator = document.getElementById('run-operator').value;
-  const flour = parseFloat(document.getElementById('ing-flour').value) || 0;
-  const water = parseFloat(document.getElementById('ing-water').value) || 0;
-  const salt = parseFloat(document.getElementById('ing-salt').value) || 0;
-  const lard = parseFloat(document.getElementById('ing-lard').value) || 0;
-  const otherIng = document.getElementById('ing-other').value;
-  const notes = document.getElementById('run-notes').value;
+function g(id){return document.getElementById(id);}
+function gv(id){const el=g(id);return el?(parseFloat(el.value)||0):0;}
+function gt(id){const el=g(id);return el?el.value.trim():'';}
+function setSyncIndicator(state,text){
+  const el=g('sync-indicator');
+  el.className='sync-indicator '+(state==='ok'?'ok':state==='err'?'err':'syncing');
+  el.textContent=text;
+}
+function showLoading(msg){g('loading-text').textContent=msg||'Saving…';g('loading-overlay').classList.remove('hidden');}
+function hideLoading(){g('loading-overlay').classList.add('hidden');}
+function showToast(msg,warn){
+  const el=g('toast');el.textContent=msg;
+  el.style.background=warn?'var(--red)':'var(--green)';
+  el.style.color=warn?'#fff':'#000';
+  el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000);
+}
 
-  if (!date || flour === 0) {
-    showToast('⚠ ' + (currentLang === 'es' ? 'Ingrese fecha y harina' : 'Enter date and flour amount'), true);
-    return;
-  }
+// ============================================================
+// SAVE RUN → Supabase
+// ============================================================
+async function saveRun() {
+  const date=gt('run-date'), flour=gv('ing-flour');
+  if (!date||flour===0){showToast('⚠ '+(currentLang==='es'?'Ingrese fecha y harina':'Enter date and flour amount'),true);return;}
 
-  const items = [];
-  let totalCases = 0;
-  document.querySelectorAll('.item-entry').forEach(entry => {
-    const name = entry.querySelector('.item-select')?.value || '';
-    const cases = parseFloat(entry.querySelector('.item-cases')?.value) || 0;
-    if (name && cases > 0) {
-      items.push({ name, cases });
-      totalCases += cases;
-    }
+  const items=[];let totalCases=0;
+  document.querySelectorAll('.item-entry').forEach(entry=>{
+    const name=entry.querySelector('.item-select')?.value||'';
+    const cases=parseFloat(entry.querySelector('.item-cases')?.value)||0;
+    if(name&&cases>0){items.push({name,cases});totalCases+=cases;}
   });
 
-  const run = {
-    id: Date.now(),
-    date, shift, operator, flour, water, salt, lard, otherIng, notes,
-    items, totalCases,
-    ratio: totalCases > 0 ? (flour / totalCases).toFixed(2) : '—'
+  const run={
+    date, shift:gt('run-shift'), operator:gt('run-operator'),
+    flour, lot_flour:gt('lot-flour'),
+    water:gv('ing-water'),
+    oil:gv('ing-oil'), lot_oil:gt('lot-oil'),
+    calciump:gv('ing-calciump'), lot_calciump:gt('lot-calciump'),
+    sodiump:gv('ing-sodiump'), lot_sodiump:gt('lot-sodiump'),
+    bakingp:gv('ing-bakingp'), lot_bakingp:gt('lot-bakingp'),
+    salt:gv('ing-salt'), lot_salt:gt('lot-salt'),
+    fumaric:gv('ing-fumaric'), lot_fumaric:gt('lot-fumaric'),
+    guar:gv('ing-guar'), lot_guar:gt('lot-guar'),
+    enzyme:gv('ing-enzyme'), lot_enzyme:gt('lot-enzyme'),
+    beta:gv('ing-beta'), lot_beta:gt('lot-beta'),
+    gordita:gv('ing-gordita'),
+    items_json:JSON.stringify(items),
+    total_cases:totalCases,
+    ratio:totalCases>0?(flour/totalCases).toFixed(2):'0',
+    other:gt('ing-other'), notes:gt('run-notes')
   };
-  runs.unshift(run);
 
-  // Deduct from inventory
-  inventory.flour = Math.max(0, inventory.flour - flour);
-  inventory.salt = Math.max(0, inventory.salt - salt);
-  inventory.lard = Math.max(0, inventory.lard - lard);
-
-  clearRun();
-  refreshDashboard();
-  renderHistory();
-  showToast(t('runSaved'));
-  showTab('dash');
+  showLoading('Saving run to cloud…');
+  try {
+    const saved=await SB.insert('production_runs', run);
+    // Update inventory
+    inventory.flour_lbs=Math.max(0,inventory.flour_lbs-flour);
+    inventory.oil_cases=Math.max(0,inventory.oil_cases-run.oil);
+    inventory.beta_count=Math.max(0,inventory.beta_count-run.beta);
+    await SB.updateInventory(inventory);
+    // Add to local state
+    runs.unshift({...run, id:saved[0]?.id||Date.now(), items, totalCases});
+    clearRun(); refreshDashboard(); renderHistory();
+    showToast(t('runSaved'));
+    showTab('dash');
+  } catch(err) {
+    console.error(err);
+    showToast('⚠ Error saving: '+err.message, true);
+    setSyncIndicator('err','⚠ Offline');
+  } finally { hideLoading(); }
 }
 
-function clearRun() {
-  document.getElementById('run-date').value = '';
-  document.getElementById('run-operator').value = '';
-  document.getElementById('ing-flour').value = '';
-  document.getElementById('ing-water').value = '';
-  document.getElementById('ing-salt').value = '';
-  document.getElementById('ing-lard').value = '';
-  document.getElementById('ing-other').value = '';
-  document.getElementById('run-notes').value = '';
-  document.getElementById('items-container').innerHTML = '';
-  itemCount = 0;
-  updateSummary();
-}
-
-// ============================================================
-// SAVE RECEIPT
-// ============================================================
-function saveReceival() {
-  const date = document.getElementById('recv-date').value;
-  const supplier = document.getElementById('recv-supplier').value;
-  const flour = parseFloat(document.getElementById('recv-flour').value) || 0;
-  const lard = parseFloat(document.getElementById('recv-lard').value) || 0;
-  const salt = parseFloat(document.getElementById('recv-salt').value) || 0;
-  const po = document.getElementById('recv-po').value;
-  const notes = document.getElementById('recv-notes').value;
-
-  if (!date) {
-    showToast('⚠ ' + (currentLang === 'es' ? 'Ingrese la fecha' : 'Enter a date'), true);
-    return;
-  }
-
-  receipts.unshift({ id: Date.now(), date, supplier, flour, lard, salt, po, notes });
-
-  inventory.flour += flour;
-  inventory.lard += lard;
-  inventory.salt += salt;
-
-  // Clear form
-  ['recv-date','recv-supplier','recv-flour','recv-flour-bags',
-   'recv-lard','recv-lard-units','recv-salt','recv-salt-units','recv-po','recv-notes'].forEach(id => {
-    document.getElementById(id).value = '';
+function clearRun(){
+  ['run-date','run-operator','ing-flour','lot-flour','ing-water',
+   'ing-oil','lot-oil','ing-calciump','lot-calciump','ing-sodiump','lot-sodiump',
+   'ing-bakingp','lot-bakingp','ing-salt','lot-salt','ing-fumaric','lot-fumaric',
+   'ing-guar','lot-guar','ing-enzyme','lot-enzyme','ing-beta','lot-beta',
+   'ing-gordita','ing-other','run-notes'].forEach(id=>{
+    const el=g(id);if(el)el.value=id==='run-date'?new Date().toISOString().split('T')[0]:'';
   });
+  g('items-container').innerHTML='';itemCount=0;updateSummary();addItem();
+}
 
-  refreshDashboard();
-  renderHistory();
-  showToast(t('receiptSaved'));
-  showTab('dash');
+// ============================================================
+// SAVE RECEIPT → Supabase
+// ============================================================
+async function saveReceival() {
+  const date=gt('recv-date');
+  if(!date){showToast('⚠ '+(currentLang==='es'?'Ingrese la fecha':'Enter a date'),true);return;}
+  const r={
+    date, supplier:gt('recv-supplier'), po:gt('recv-po'),
+    flour_lbs:gv('recv-flour-lbs'), flour_bags:gv('recv-flour-bags'), flour_lot:gt('recv-flour-lot'),
+    oil:gv('recv-oil'), oil_lot:gt('recv-oil-lot'),
+    beta:gv('recv-beta'), beta_lot:gt('recv-beta-lot'),
+    other:gt('recv-other'), notes:gt('recv-notes')
+  };
+  showLoading('Saving receipt to cloud…');
+  try {
+    const saved=await SB.insert('receipts',r);
+    inventory.flour_lbs+=r.flour_lbs;
+    inventory.oil_cases+=r.oil;
+    inventory.beta_count+=r.beta;
+    await SB.updateInventory(inventory);
+    receipts.unshift({...r,id:saved[0]?.id||Date.now()});
+    ['recv-date','recv-supplier','recv-po','recv-flour-lbs','recv-flour-bags','recv-flour-lot',
+     'recv-oil','recv-oil-lot','recv-beta','recv-beta-lot','recv-other','recv-notes'].forEach(id=>{
+      const el=g(id);if(el)el.value=id==='recv-date'?new Date().toISOString().split('T')[0]:'';
+    });
+    refreshDashboard();renderHistory();
+    showToast(t('receiptSaved'));showTab('dash');
+  } catch(err){showToast('⚠ Error: '+err.message,true);setSyncIndicator('err','⚠ Offline');}
+  finally{hideLoading();}
+}
+
+// ============================================================
+// HISTORY FILTER
+// ============================================================
+function setHistFilter(f,btn){
+  histFilter=f;
+  document.querySelectorAll('#hist-filter-bar .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderHistory();
+}
+function filterByDate(list,f){
+  const now=new Date();
+  if(f==='all')return list;
+  return list.filter(r=>{
+    const d=new Date(r.date);
+    if(f==='today')return d.toDateString()===now.toDateString();
+    if(f==='week'){const w=new Date(now);w.setDate(w.getDate()-7);return d>=w;}
+    if(f==='month')return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+    return true;
+  });
 }
 
 // ============================================================
 // DASHBOARD
 // ============================================================
-function refreshDashboard() {
-  // Stats (this week)
-  const now = new Date();
-  const weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate() - 7);
-  const weekRuns = runs.filter(r => new Date(r.date) >= weekAgo);
-  const weekCases = weekRuns.reduce((a, r) => a + r.totalCases, 0);
-  const weekFlour = weekRuns.reduce((a, r) => a + r.flour, 0);
-  const avgRatio = weekCases > 0 ? (weekFlour / weekCases).toFixed(2) : '—';
+function refreshDashboard(){
+  const now=new Date(), weekAgo=new Date(now);weekAgo.setDate(weekAgo.getDate()-7);
+  const wr=runs.filter(r=>new Date(r.date)>=weekAgo);
+  const wc=wr.reduce((a,r)=>a+r.totalCases,0);
+  const wf=wr.reduce((a,r)=>a+r.flour,0);
+  const avg=wc>0?(wf/wc).toFixed(2):'—';
+  g('stat-total-cases').textContent=wc||'0';
+  g('stat-runs').textContent=wr.length||'0';
+  g('stat-flour-used').textContent=wf?wf.toLocaleString():'0';
+  g('stat-flour-ratio').textContent=avg!=='—'?avg:'—';
 
-  document.getElementById('stat-total-cases').textContent = weekCases || '0';
-  document.getElementById('stat-runs').textContent = weekRuns.length || '0';
-  document.getElementById('stat-flour-used').textContent = weekFlour ? weekFlour.toLocaleString() : '0';
-  document.getElementById('stat-flour-ratio').textContent = avgRatio !== '—' ? avgRatio : '—';
-
-  // Inventory levels
-  const invEl = document.getElementById('inventory-levels');
-  const items = [
-    { key: 'flourStock', qty: inventory.flour, unit: 'lbs', max: 10000 },
-    { key: 'lardStock', qty: inventory.lard, unit: 'lbs', max: 1000 },
-    { key: 'saltStock', qty: inventory.salt, unit: 'lbs', max: 500 },
+  const items=[
+    {key:'flourStock',qty:inventory.flour_lbs,unit:'lbs',max:10000},
+    {key:'oilStock',qty:inventory.oil_cases,unit:'cases',max:100},
+    {key:'betaStock',qty:inventory.beta_count,unit:'tablets',max:1000},
   ];
-  invEl.innerHTML = items.map(item => {
-    const pct = Math.min(100, Math.round((item.qty / item.max) * 100));
-    const cls = pct > 40 ? 'ok' : pct > 15 ? 'low' : 'critical';
-    return `
-      <div class="inv-item">
-        <div class="inv-name">${t(item.key)}</div>
-        <div class="inv-bar-wrap"><div class="inv-bar ${cls}" style="width:${pct}%"></div></div>
-        <div class="inv-qty ${cls}">${item.qty.toLocaleString()}<span style="font-size:13px;font-weight:600"> ${item.unit}</span></div>
-      </div>
-    `;
+  g('inventory-levels').innerHTML=items.map(item=>{
+    const pct=Math.min(100,Math.round((item.qty/item.max)*100));
+    const cls=pct>40?'ok':pct>15?'low':'critical';
+    return `<div class="inv-item"><div class="inv-name">${t(item.key)}</div>
+      <div class="inv-bar-wrap"><div class="inv-bar ${cls}" style="width:${pct}%"></div></div>
+      <div class="inv-qty ${cls}">${item.qty.toLocaleString()} <span style="font-size:13px;font-weight:600">${item.unit}</span></div></div>`;
   }).join('');
 
-  // Recent runs
-  const recentEl = document.getElementById('recent-runs-list');
-  if (runs.length === 0) {
-    recentEl.innerHTML = `<div class="empty-state">
-      <div class="empty-icon">📋</div>
-      <div class="empty-text">${t('noRuns')}</div>
-      <div class="empty-sub">${t('tapLogRun')}</div>
-    </div>`;
-    return;
-  }
-  recentEl.innerHTML = runs.slice(0, 5).map(r => `
-    <div class="inv-item" style="flex-direction:column; align-items:flex-start; gap:6px;">
-      <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-        <span style="font-size:16px; font-weight:800; color:var(--text)">${r.date}</span>
-        <span style="font-size:16px; font-weight:800; color:var(--accent)">${r.totalCases} cases</span>
+  const rel=g('recent-runs-list');
+  if(runs.length===0){rel.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">${t('noRuns')}</div><div class="empty-sub">${t('tapLogRun')}</div></div>`;return;}
+  rel.innerHTML=runs.slice(0,5).map(r=>`
+    <div class="inv-item" style="flex-direction:column;align-items:flex-start;gap:6px;">
+      <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+        <span style="font-size:16px;font-weight:800;color:var(--text)">${r.date}</span>
+        <span style="font-size:16px;font-weight:800;color:var(--accent)">${r.totalCases} cases</span>
       </div>
-      <div>${r.items.map(i => `<span class="item-tag accent">${i.name}: ${i.cases}</span>`).join('')}</div>
-      <div style="font-size:14px; color:var(--text3)">🌾 ${r.flour} lbs flour &nbsp;·&nbsp; ${r.ratio} lbs/case</div>
-    </div>
-  `).join('');
+      <div>${r.items.map(i=>`<span class="item-tag accent">${i.name}: ${i.cases}</span>`).join('')}</div>
+      <div style="font-size:13px;color:var(--text3)">🌾 ${r.flour} lbs · ${r.ratio} lbs/case · Lot: ${r.lot_flour||'—'}</div>
+    </div>`).join('');
 }
 
 // ============================================================
-// HISTORY TABLE
+// HISTORY RENDER
 // ============================================================
-function renderHistory() {
-  const body = document.getElementById('history-body');
-  if (runs.length === 0) {
-    body.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">${t('noRuns')}</div></div></td></tr>`;
-  } else {
-    body.innerHTML = runs.map(r => `
-      <tr>
-        <td>${r.date}</td>
-        <td>${r.shift}</td>
-        <td>${r.items.map(i => `<span class="item-tag">${i.name}: ${i.cases}</span>`).join('')}</td>
-        <td>${r.totalCases}</td>
-        <td>${r.flour.toLocaleString()}</td>
-        <td>${r.ratio}</td>
-      </tr>
-    `).join('');
+function renderHistory(){
+  const f=filterByDate(runs,histFilter);
+  g('history-body').innerHTML=f.length===0
+    ?`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">${t('noRuns')}</div></div></td></tr>`
+    :f.map(r=>`<tr><td>${r.date}</td><td>${r.shift}</td><td>${r.operator||'—'}</td>
+        <td>${r.items.map(i=>`<span class="item-tag">${i.name}: ${i.cases}</span>`).join('')}</td>
+        <td>${r.totalCases}</td><td>${r.flour.toLocaleString()}</td><td>${r.ratio}</td></tr>`).join('');
+  g('receipt-body').innerHTML=receipts.length===0
+    ?`<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">${t('noReceipts')}</div></div></td></tr>`
+    :receipts.map(r=>`<tr><td>${r.date}</td><td>${r.supplier||'—'}</td><td>${r.po||'—'}</td><td>${r.flour_lbs||'—'}</td><td>${r.flour_lot||'—'}</td></tr>`).join('');
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function getLabel(p){const n=new Date();if(p==='today')return n.toISOString().split('T')[0];if(p==='week')return'Week_'+n.toISOString().split('T')[0];if(p==='month')return n.getFullYear()+'_'+String(n.getMonth()+1).padStart(2,'0');return'All';}
+function dlExcel(sheets,fname){
+  const wb=XLSX.utils.book_new();
+  sheets.forEach(s=>{const ws=XLSX.utils.json_to_sheet(s.data);ws['!cols']=Object.keys(s.data[0]||{}).map(k=>({wch:Math.max(k.length,12)}));XLSX.utils.book_append_sheet(wb,ws,s.name);});
+  XLSX.writeFile(wb,fname+'.xlsx');showToast('✓ Downloaded: '+fname+'.xlsx');
+}
+function runsToRows(data){return data.map(r=>({'Date':r.date,'Shift':r.shift,'Operator':r.operator||'','Items':r.items.map(i=>i.name+': '+i.cases+' cases').join(' | '),'Total Cases':r.totalCases,'Flour (lbs)':r.flour,'Flour Lot':r.lot_flour||'','Water (lbs)':r.water,'Oil (cases)':r.oil,'Oil Lot':r.lot_oil||'','Calcium P.':r.calciump,'Cal. Lot':r.lot_calciump||'','Sodium P.':r.sodiump,'Sod. Lot':r.lot_sodiump||'','Baking P.':r.bakingp,'Bak. Lot':r.lot_bakingp||'','Salt (lbs)':r.salt,'Salt Lot':r.lot_salt||'','Fumaric Acid':r.fumaric,'Fum. Lot':r.lot_fumaric||'','Guar Gum':r.guar,'Guar Lot':r.lot_guar||'','Enzyme Blend':r.enzyme,'Enz. Lot':r.lot_enzyme||'','Beta Tablets':r.beta,'Beta Lot':r.lot_beta||'','Gordita Bags':r.gordita,'lbs/case':r.ratio,'Other':r.other||'','Notes':r.notes||''}))}
+function exportRuns(p){const d=filterByDate(runs,p);if(!d.length){showToast('⚠ No data',true);return;}dlExcel([{name:'Production Runs',data:runsToRows(d)}],'Atotonilco_Runs_'+getLabel(p));}
+function exportReceipts(p){const d=filterByDate(receipts,p);if(!d.length){showToast('⚠ No data',true);return;}dlExcel([{name:'Receipts',data:d.map(r=>({'Date':r.date,'Supplier':r.supplier||'','PO':r.po||'','Flour (lbs)':r.flour_lbs,'Flour Bags':r.flour_bags,'Flour Lot':r.flour_lot||'','Oil (cases)':r.oil,'Oil Lot':r.oil_lot||'','Beta Tablets':r.beta,'Beta Lot':r.beta_lot||'','Other':r.other||''}))}],'Atotonilco_Receipts_'+getLabel(p));}
+function exportFull(p){const rd=filterByDate(runs,p),rcd=filterByDate(receipts,p);const sheets=[];if(rd.length)sheets.push({name:'Production Runs',data:runsToRows(rd)});if(rcd.length)sheets.push({name:'Receipts',data:rcd.map(r=>({'Date':r.date,'Supplier':r.supplier||'','PO':r.po||'','Flour (lbs)':r.flour_lbs,'Flour Lot':r.flour_lot||'','Oil':r.oil,'Beta Tabs':r.beta,'Other':r.other||''}))});if(!sheets.length){showToast('⚠ No data',true);return;}dlExcel(sheets,'Atotonilco_FullReport_'+getLabel(p));}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function clearLocalData(){
+  if(confirm(currentLang==='es'?'¿Borrar caché local? Los datos de Supabase permanecen.':'Clear local cache? Supabase data is safe.')){
+    runs=[];receipts=[];refreshDashboard();renderHistory();
+    showToast(currentLang==='es'?'✓ Caché borrado':'✓ Local cache cleared');
+  }
+}
+function updateDbStatusBox(){
+  const el=g('db-status-box');
+  if(!el)return;
+  const url=SUPABASE_URL.replace('https://','').split('.')[0];
+  el.innerHTML=`<div style="margin-bottom:8px;"><strong style="color:var(--text)">Status:</strong> <span style="color:${dbConnected?'var(--green)':'var(--red)'};font-weight:700;">${dbConnected?'✓ Connected':'⚠ Not connected'}</span></div>
+  <div><strong style="color:var(--text)">Project:</strong> <span style="color:var(--text3)">${url||'—'}</span></div>
+  <div style="margin-top:8px;font-size:13px;color:var(--text3)">Runs in DB: ${runs.length} &nbsp;·&nbsp; Receipts in DB: ${receipts.length}</div>`;
+}
+
+// ============================================================
+// INIT — Load from Supabase
+// ============================================================
+async function init() {
+  const today=new Date().toISOString().split('T')[0];
+  g('run-date').value=today; g('recv-date').value=today;
+
+  // Check credentials
+  if (SUPABASE_URL==='PASTE_YOUR_PROJECT_URL_HERE') {
+    hideLoading();
+    document.getElementById('lock-screen').classList.remove('hidden');
+    document.getElementById('pin-hint').textContent='⚠ Supabase not yet configured.\nSee setup guide.\nDefault PIN: 1234';
+    setSyncIndicator('err','Not configured');
+    dbConnected=false; addItem(); return;
   }
 
-  const recBody = document.getElementById('receipt-body');
-  if (receipts.length === 0) {
-    recBody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">${t('noReceipts')}</div></div></td></tr>`;
-  } else {
-    recBody.innerHTML = receipts.map(r => `
-      <tr>
-        <td>${r.date}</td>
-        <td>${r.supplier || '—'}</td>
-        <td>${r.flour || '—'}</td>
-        <td>${r.lard || '—'}</td>
-        <td>${r.salt || '—'}</td>
-      </tr>
-    `).join('');
+  setSyncIndicator('syncing','⏳ Connecting…');
+
+  try {
+    // Load all data in parallel
+    const [runData, recData, invData] = await Promise.all([
+      SB.get('production_runs', '&limit=500'),
+      SB.get('receipts', '&limit=500'),
+      SB.getInventory()
+    ]);
+
+    // Parse runs
+    runs = runData.map(r => ({
+      ...r,
+      items: (() => { try { return JSON.parse(r.items_json||'[]'); } catch(e){ return []; } })(),
+      totalCases: r.total_cases || 0,
+      ratio: r.ratio || '—'
+    }));
+    receipts = recData;
+    if (invData) inventory = { flour_lbs: invData.flour_lbs||0, oil_cases: invData.oil_cases||0, beta_count: invData.beta_count||0 };
+
+    dbConnected = true;
+    setSyncIndicator('ok', '☁ Synced');
+    g('loading-text').textContent = 'Loaded!';
+    setTimeout(hideLoading, 500);
+  } catch(err) {
+    console.error('DB load error:', err);
+    dbConnected = false;
+    setSyncIndicator('err', '⚠ Offline');
+    hideLoading();
+    showToast('⚠ Could not connect to database. Check your credentials.', true);
   }
-}
 
-// ============================================================
-// TOAST
-// ============================================================
-function showToast(msg, warn) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.style.background = warn ? 'var(--red)' : 'var(--green)';
-  el.style.color = warn ? '#fff' : '#000';
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2800);
-}
-
-// ============================================================
-// INIT
-// ============================================================
-function init() {
-  // Set today's date
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('run-date').value = today;
-  document.getElementById('recv-date').value = today;
-
-  // Seed one example run
-  runs.push({
-    id: 1,
-    date: '2025-12-23',
-    shift: 'morning',
-    operator: 'Carlos',
-    flour: 1450, water: 870, salt: 14.5, lard: 87,
-    otherIng: '', notes: '',
-    items: [{ name: 'Burrito #1', cases: 312 }, { name: 'Burrito #2', cases: 198 }],
-    totalCases: 510,
-    ratio: '2.84'
-  });
+  // Show lock screen
+  document.getElementById('lock-screen').classList.remove('hidden');
+  document.getElementById('pin-hint').textContent = 'Enter your 4-digit PIN\nDefault: 1234 — change in Settings';
 
   refreshDashboard();
   renderHistory();
-  addItem(); // start with one item row
+  addItem();
 }
 
 init();
