@@ -174,6 +174,43 @@
   /* TOAST */
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--green);color:#000;font-family:var(--font-display);font-size:16px;font-weight:800;padding:14px 28px;border-radius:50px;opacity:0;transition:all 0.3s;z-index:9998;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,0.5);}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ===== EDIT MODAL ===== */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:5000;display:flex;align-items:flex-end;justify-content:center;}
+  .modal-overlay.hidden{display:none;}
+  .modal-sheet{background:var(--surface);border-radius:18px 18px 0 0;width:100%;max-width:700px;max-height:90vh;overflow-y:auto;padding:24px 18px 40px;-webkit-overflow-scrolling:touch;}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+  .modal-title{font-family:var(--font-display);font-size:20px;font-weight:900;color:var(--accent);}
+  .modal-close{background:var(--surface2);border:2px solid var(--border);border-radius:8px;color:var(--text3);font-size:22px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .modal-btn-row{display:flex;gap:10px;margin-top:20px;}
+  .modal-btn-row .btn{flex:2;margin-top:0;}
+  .btn-delete{flex:1;background:var(--red);color:#fff;border:none;border-radius:10px;font-family:var(--font-display);font-size:16px;font-weight:800;padding:16px;cursor:pointer;}
+  .btn-delete:active{transform:scale(0.98);}
+  .modal-section{font-size:12px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin:16px 0 10px;display:flex;align-items:center;gap:8px;}
+  .modal-section::after{content:'';flex:1;height:1px;background:var(--border);}
+  .btn-edit-row{background:var(--surface3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:13px;font-weight:700;padding:5px 11px;cursor:pointer;font-family:var(--font-display);}
+  .btn-edit-row:active{background:var(--accent);color:#000;}
+  .btn-del-row{background:none;border:1px solid var(--border);border-radius:6px;color:var(--red);font-size:15px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+
+  /* AUDIT LOG */
+  .audit-pin-gate{text-align:center;padding:48px 24px;}
+  .audit-pin-icon{font-size:52px;margin-bottom:12px;}
+  .audit-pin-title{font-family:var(--font-display);font-size:22px;font-weight:900;color:var(--accent);margin-bottom:6px;}
+  .audit-pin-sub{font-size:14px;color:var(--text3);margin-bottom:28px;}
+  .audit-pin-dots{display:flex;gap:14px;justify-content:center;margin-bottom:24px;}
+  .audit-pin-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:all 0.2s;}
+  .audit-pin-dot.filled{background:var(--blue);border-color:var(--blue);}
+  .audit-pin-dot.error{background:var(--red);border-color:var(--red);}
+  .audit-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:280px;margin:0 auto;}
+  .audit-key{background:var(--surface);border:2px solid var(--border);border-radius:12px;color:var(--text);font-family:var(--font-display);font-size:24px;font-weight:800;padding:16px;cursor:pointer;transition:all 0.15s;-webkit-tap-highlight-color:transparent;}
+  .audit-key:active{background:var(--blue);color:#fff;transform:scale(0.94);}
+  .audit-key.del{font-size:18px;color:var(--text3);}
+  .audit-key.empty{background:none;border:none;cursor:default;}
+  .audit-pin-err{margin-top:14px;font-size:14px;font-weight:700;color:var(--red);min-height:22px;}
+  .audit-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:0.5px;}
+  .audit-badge.edited{background:#1a3a5c;color:var(--blue);border:1px solid var(--blue);}
+  .audit-badge.deleted{background:#3a1a1a;color:var(--red);border:1px solid var(--red);}
+  .audit-lock-btn{background:var(--surface2);border:2px solid var(--border);border-radius:8px;color:var(--text3);font-size:13px;font-weight:700;padding:6px 14px;cursor:pointer;font-family:var(--font-display);}
 </style>
 </head>
 <body>
@@ -227,6 +264,7 @@
     <button class="tab-item" onclick="showTab('history')" id="tab-history"><span class="tab-icon">🕘</span><span data-t="history">History</span></button>
     <button class="tab-item" onclick="showTab('export')" id="tab-export"><span class="tab-icon">📤</span><span data-t="export">Export</span></button>
     <button class="tab-item" onclick="showTab('settings')" id="tab-settings"><span class="tab-icon">⚙️</span><span data-t="settings">Settings</span></button>
+    <button class="tab-item" onclick="showTab('audit')" id="tab-audit" style="display:none;"><span class="tab-icon">🔍</span><span>Audit Log</span></button>
   </nav>
 
   <main class="main">
@@ -390,7 +428,7 @@
           <table class="log-table"><thead><tr>
             <th data-t="date">Date</th><th data-t="shift">Shift</th><th data-t="operator">Operator</th>
             <th data-t="itemsProducedShort">Items</th><th data-t="totalCases">Cases</th>
-            <th data-t="flourLbs">Flour (lbs)</th><th>lbs/case</th>
+            <th data-t="flourLbs">Flour (lbs)</th><th>lbs/case</th><th></th>
           </tr></thead><tbody id="history-body"></tbody></table>
         </div>
       </div>
@@ -399,7 +437,7 @@
         <div class="log-wrapper">
           <table class="log-table"><thead><tr>
             <th data-t="date">Date</th><th data-t="supplier">Supplier</th>
-            <th>PO #</th><th>Flour (lbs)</th><th>Flour Lot</th>
+            <th>PO #</th><th>Flour (lbs)</th><th>Flour Lot</th><th></th>
           </tr></thead><tbody id="receipt-body"></tbody></table>
         </div>
       </div>
@@ -454,7 +492,7 @@
           <button class="btn" style="width:auto;padding:10px 18px;margin:0;font-size:14px;background:var(--red);color:#fff;" onclick="clearLocalData()" data-t="clearData">Clear</button>
         </div>
         <div class="setting-row" style="padding:16px 0;">
-          <div><div style="font-size:17px;font-weight:700;" data-t="appVersion">Version</div><div style="font-size:13px;color:var(--text3);">v3.0 — Feb 2026 · inventory-system · Supabase enabled</div></div>
+          <div><div style="font-size:17px;font-weight:700;" data-t="appVersion">Version</div><div style="font-size:13px;color:var(--text3);cursor:default;" id="version-tap" onclick="versionTap()">v3.1 — Feb 2026 · inventory-system · Supabase enabled</div></div>
         </div>
       </div>
       <div class="card">
@@ -463,7 +501,202 @@
       </div>
     </div>
 
+
+    <!-- AUDIT LOG (hidden tab, PIN 2123) -->
+    <div class="panel" id="panel-audit">
+
+      <!-- PIN GATE (shown when locked) -->
+      <div id="audit-gate" class="card audit-pin-gate">
+        <div class="audit-pin-icon">🔍</div>
+        <div class="audit-pin-title">Audit Log</div>
+        <div class="audit-pin-sub">Enter the audit PIN to continue</div>
+        <div class="audit-pin-dots">
+          <div class="audit-pin-dot" id="adot-0"></div>
+          <div class="audit-pin-dot" id="adot-1"></div>
+          <div class="audit-pin-dot" id="adot-2"></div>
+          <div class="audit-pin-dot" id="adot-3"></div>
+        </div>
+        <div class="audit-keypad">
+          <button class="audit-key" onclick="auditPinPress('1')">1</button>
+          <button class="audit-key" onclick="auditPinPress('2')">2</button>
+          <button class="audit-key" onclick="auditPinPress('3')">3</button>
+          <button class="audit-key" onclick="auditPinPress('4')">4</button>
+          <button class="audit-key" onclick="auditPinPress('5')">5</button>
+          <button class="audit-key" onclick="auditPinPress('6')">6</button>
+          <button class="audit-key" onclick="auditPinPress('7')">7</button>
+          <button class="audit-key" onclick="auditPinPress('8')">8</button>
+          <button class="audit-key" onclick="auditPinPress('9')">9</button>
+          <div class="audit-key empty"></div>
+          <button class="audit-key" onclick="auditPinPress('0')">0</button>
+          <button class="audit-key del" onclick="auditPinDel()">⌫</button>
+        </div>
+        <div class="audit-pin-err" id="audit-pin-err"></div>
+      </div>
+
+      <!-- AUDIT CONTENT (shown after unlock) -->
+      <div id="audit-content" style="display:none;">
+        <div class="card">
+          <div class="card-title" style="justify-content:space-between;">
+            <span>🔍 Audit Log</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button class="export-btn" onclick="exportAuditLog()" style="font-size:13px;padding:7px 14px;">📥 Export Excel</button>
+              <button class="audit-lock-btn" onclick="lockAuditLog()">🔒 Lock</button>
+            </div>
+          </div>
+          <div class="filter-bar" id="audit-filter-bar">
+            <button class="filter-btn active" onclick="setAuditFilter('all',this)">All</button>
+            <button class="filter-btn" onclick="setAuditFilter('today',this)">Today</button>
+            <button class="filter-btn" onclick="setAuditFilter('week',this)">This Week</button>
+            <button class="filter-btn" onclick="setAuditFilter('month',this)">This Month</button>
+          </div>
+          <div id="audit-summary" style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;"></div>
+          <div class="log-wrapper">
+            <table class="log-table" style="min-width:700px;">
+              <thead><tr>
+                <th>Date &amp; Time</th>
+                <th>Action</th>
+                <th>Record Type</th>
+                <th>Record Date</th>
+                <th>Changed By</th>
+                <th>What Changed</th>
+              </tr></thead>
+              <tbody id="audit-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </main>
+
+<!-- ===== EDIT RUN MODAL ===== -->
+<div class="modal-overlay hidden" id="edit-run-modal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">✏️ Edit Production Run</div>
+      <button class="modal-close" onclick="closeEditRun()">✕</button>
+    </div>
+    <input type="hidden" id="edit-run-id">
+    <div class="form-row-2">
+      <div class="form-group"><label>Date</label><input type="date" id="edit-run-date"></div>
+      <div class="form-group"><label>Shift</label>
+        <select id="edit-run-shift">
+          <option value="morning">Morning</option>
+          <option value="afternoon">Afternoon</option>
+          <option value="night">Night</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Operator</label><input type="text" id="edit-run-operator" placeholder="—"></div>
+
+    <div class="modal-section">Ingredients</div>
+    <div class="form-row-3">
+      <div class="form-group"><label>Flour (lbs)</label><input type="number" inputmode="decimal" id="edit-flour" placeholder="0"></div>
+      <div class="form-group"><label>Flour Lot</label><input type="text" id="edit-lot-flour" placeholder="LOT-XXXX"></div>
+      <div class="form-group"><label>Silo #</label>
+        <select id="edit-silo-flour">
+          <option value="">— Select —</option>
+          <option value="Silo 1">Silo 1</option>
+          <option value="Silo 2">Silo 2</option>
+          <option value="Silo 3">Silo 3</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Water (lbs)</label><input type="number" inputmode="decimal" id="edit-water" placeholder="0"></div>
+      <div class="form-group"><label>Oil (cases)</label><input type="number" inputmode="decimal" id="edit-oil" placeholder="0"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Oil Lot</label><input type="text" id="edit-lot-oil" placeholder="LOT-XXXX"></div>
+      <div class="form-group"><label>Salt (lbs)</label><input type="number" inputmode="decimal" id="edit-salt" placeholder="0"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Calcium P.</label><input type="number" inputmode="decimal" id="edit-calciump" placeholder="0"></div>
+      <div class="form-group"><label>Calcium Lot</label><input type="text" id="edit-lot-calciump" placeholder="LOT-XXXX"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Sodium P.</label><input type="number" inputmode="decimal" id="edit-sodiump" placeholder="0"></div>
+      <div class="form-group"><label>Sodium Lot</label><input type="text" id="edit-lot-sodiump" placeholder="LOT-XXXX"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Baking P.</label><input type="number" inputmode="decimal" id="edit-bakingp" placeholder="0"></div>
+      <div class="form-group"><label>Baking Lot</label><input type="text" id="edit-lot-bakingp" placeholder="LOT-XXXX"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Fumaric Acid</label><input type="number" inputmode="decimal" id="edit-fumaric" placeholder="0"></div>
+      <div class="form-group"><label>Fumaric Lot</label><input type="text" id="edit-lot-fumaric" placeholder="LOT-XXXX"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Guar Gum</label><input type="number" inputmode="decimal" id="edit-guar" placeholder="0"></div>
+      <div class="form-group"><label>Guar Lot</label><input type="text" id="edit-lot-guar" placeholder="LOT-XXXX"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Enzyme Blend</label><input type="number" inputmode="decimal" id="edit-enzyme" placeholder="0"></div>
+      <div class="form-group"><label>Enzyme Lot</label><input type="text" id="edit-lot-enzyme" placeholder="LOT-XXXX"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Beta Tablets</label><input type="number" inputmode="numeric" id="edit-beta" placeholder="0"></div>
+      <div class="form-group"><label>Beta Lot</label><input type="text" id="edit-lot-beta" placeholder="LOT-XXXX"></div>
+    </div>
+    <div class="form-group"><label>Gordita Bags</label><input type="number" inputmode="numeric" id="edit-gordita" placeholder="0"></div>
+    <div class="form-group"><label>Other / Notes (Ingredients)</label><input type="text" id="edit-other" placeholder="—"></div>
+
+    <div class="modal-section">Items Produced</div>
+    <div id="edit-items-container"></div>
+    <button class="btn-add-item" onclick="addEditItem()" style="margin-bottom:12px;">+ Add Item</button>
+
+    <div class="form-group"><label>Run Notes</label><textarea id="edit-run-notes" placeholder="—" style="min-height:70px;"></textarea></div>
+
+    <div class="form-group" style="margin-top:14px;">
+      <label style="color:var(--red);font-weight:800;">★ Changed By <span style="font-size:12px;color:var(--text3);font-weight:600;">(your name — required for audit log)</span></label>
+      <input type="text" id="edit-run-changed-by" placeholder="Enter your name" style="border-color:var(--blue);">
+    </div>
+    <div class="modal-btn-row">
+      <button class="btn" onclick="saveEditRun()">💾 Save Changes</button>
+      <button class="btn-delete" onclick="confirmDeleteRun()">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EDIT RECEIPT MODAL ===== -->
+<div class="modal-overlay hidden" id="edit-receipt-modal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">✏️ Edit Receipt</div>
+      <button class="modal-close" onclick="closeEditReceipt()">✕</button>
+    </div>
+    <input type="hidden" id="edit-receipt-id">
+    <div class="form-row-2">
+      <div class="form-group"><label>Date</label><input type="date" id="edit-recv-date"></div>
+      <div class="form-group"><label>Supplier</label><input type="text" id="edit-recv-supplier" placeholder="—"></div>
+    </div>
+    <div class="form-group"><label>PO / Reference #</label><input type="text" id="edit-recv-po" placeholder="—"></div>
+    <div class="form-row-3">
+      <div class="form-group"><label>Flour (lbs)</label><input type="number" inputmode="decimal" id="edit-recv-flour-lbs" placeholder="0"></div>
+      <div class="form-group"><label>Flour Bags</label><input type="number" inputmode="numeric" id="edit-recv-flour-bags" placeholder="0"></div>
+      <div class="form-group"><label>Flour Lot</label><input type="text" id="edit-recv-flour-lot" placeholder="LOT"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Oil (cases)</label><input type="number" inputmode="decimal" id="edit-recv-oil" placeholder="0"></div>
+      <div class="form-group"><label>Oil Lot</label><input type="text" id="edit-recv-oil-lot" placeholder="LOT"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Beta Tablets</label><input type="number" inputmode="numeric" id="edit-recv-beta" placeholder="0"></div>
+      <div class="form-group"><label>Beta Lot</label><input type="text" id="edit-recv-beta-lot" placeholder="LOT"></div>
+    </div>
+    <div class="form-group"><label>Other Items</label><textarea id="edit-recv-other" placeholder="—" style="min-height:60px;"></textarea></div>
+    <div class="form-group"><label>Notes</label><input type="text" id="edit-recv-notes" placeholder="—"></div>
+    <div class="form-group" style="margin-top:14px;">
+      <label style="color:var(--red);font-weight:800;">★ Changed By <span style="font-size:12px;color:var(--text3);font-weight:600;">(your name — required for audit log)</span></label>
+      <input type="text" id="edit-recv-changed-by" placeholder="Enter your name" style="border-color:var(--blue);">
+    </div>
+    <div class="modal-btn-row">
+      <button class="btn" onclick="saveEditReceipt()">💾 Save Changes</button>
+      <button class="btn-delete" onclick="confirmDeleteReceipt()">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
 </div><!-- end app-content -->
 
 <div class="toast" id="toast"></div>
@@ -948,13 +1181,26 @@ function refreshDashboard(){
 function renderHistory(){
   const f=filterByDate(runs,histFilter);
   g('history-body').innerHTML=f.length===0
-    ?`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">${t('noRuns')}</div></div></td></tr>`
-    :f.map(r=>`<tr><td>${r.date}</td><td>${r.shift}</td><td>${r.operator||'—'}</td>
+    ?`<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">${t('noRuns')}</div></div></td></tr>`
+    :f.map(r=>`<tr>
+        <td>${r.date}</td><td>${r.shift}</td><td>${r.operator||'—'}</td>
         <td>${r.items.map(i=>`<span class="item-tag">${i.name}: ${i.cases}</span>`).join('')}</td>
-        <td>${r.totalCases}</td><td>${r.flour.toLocaleString()}</td><td>${r.ratio}</td></tr>`).join('');
+        <td>${r.totalCases}</td><td>${r.flour.toLocaleString()}</td><td>${r.ratio}</td>
+        <td><div style="display:flex;gap:5px;">
+          <button class="btn-edit-row" onclick="openEditRun(${r.id})">✏️ Edit</button>
+          <button class="btn-del-row" onclick="quickDeleteRun(${r.id})" title="Delete">🗑</button>
+        </div></td>
+      </tr>`).join('');
   g('receipt-body').innerHTML=receipts.length===0
-    ?`<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">${t('noReceipts')}</div></div></td></tr>`
-    :receipts.map(r=>`<tr><td>${r.date}</td><td>${r.supplier||'—'}</td><td>${r.po||'—'}</td><td>${r.flour_lbs||'—'}</td><td>${r.flour_lot||'—'}</td></tr>`).join('');
+    ?`<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">${t('noReceipts')}</div></div></td></tr>`
+    :receipts.map(r=>`<tr>
+        <td>${r.date}</td><td>${r.supplier||'—'}</td><td>${r.po||'—'}</td>
+        <td>${r.flour_lbs||'—'}</td><td>${r.flour_lot||'—'}</td>
+        <td><div style="display:flex;gap:5px;">
+          <button class="btn-edit-row" onclick="openEditReceipt(${r.id})">✏️ Edit</button>
+          <button class="btn-del-row" onclick="quickDeleteReceipt(${r.id})" title="Delete">🗑</button>
+        </div></td>
+      </tr>`).join('');
 }
 
 // ============================================================
@@ -987,6 +1233,518 @@ function updateDbStatusBox(){
   el.innerHTML=`<div style="margin-bottom:8px;"><strong style="color:var(--text)">Status:</strong> <span style="color:${dbConnected?'var(--green)':'var(--red)'};font-weight:700;">${dbConnected?'✓ Connected':'⚠ Not connected'}</span></div>
   <div><strong style="color:var(--text)">Project:</strong> <span style="color:var(--text3)">${url||'—'}</span></div>
   <div style="margin-top:8px;font-size:13px;color:var(--text3)">Runs in DB: ${runs.length} &nbsp;·&nbsp; Receipts in DB: ${receipts.length}</div>`;
+}
+
+
+// ============================================================
+// SUPABASE UPDATE + DELETE
+// ============================================================
+async function sbUpdate(table, id, data) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: { ...SB.headers, 'Prefer': 'return=representation' },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbDelete(table, id) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+    method: 'DELETE', headers: SB.headers
+  });
+  if (!r.ok) throw new Error(await r.text());
+}
+
+// ============================================================
+// EDIT RUN MODAL
+// ============================================================
+let editItemCount = 0;
+
+function openEditRun(id) {
+  const r = runs.find(x => x.id === id);
+  if (!r) return;
+  // Populate header fields
+  g('edit-run-id').value = id;
+  g('edit-run-date').value = r.date || '';
+  g('edit-run-shift').value = r.shift || 'morning';
+  g('edit-run-operator').value = r.operator || '';
+  // Ingredients
+  g('edit-flour').value = r.flour || '';
+  g('edit-lot-flour').value = r.lot_flour || '';
+  g('edit-silo-flour').value = r.silo_flour || '';
+  g('edit-water').value = r.water || '';
+  g('edit-oil').value = r.oil || '';
+  g('edit-lot-oil').value = r.lot_oil || '';
+  g('edit-salt').value = r.salt || '';
+  g('edit-calciump').value = r.calciump || '';
+  g('edit-lot-calciump').value = r.lot_calciump || '';
+  g('edit-sodiump').value = r.sodiump || '';
+  g('edit-lot-sodiump').value = r.lot_sodiump || '';
+  g('edit-bakingp').value = r.bakingp || '';
+  g('edit-lot-bakingp').value = r.lot_bakingp || '';
+  g('edit-fumaric').value = r.fumaric || '';
+  g('edit-lot-fumaric').value = r.lot_fumaric || '';
+  g('edit-guar').value = r.guar || '';
+  g('edit-lot-guar').value = r.lot_guar || '';
+  g('edit-enzyme').value = r.enzyme || '';
+  g('edit-lot-enzyme').value = r.lot_enzyme || '';
+  g('edit-beta').value = r.beta || '';
+  g('edit-lot-beta').value = r.lot_beta || '';
+  g('edit-gordita').value = r.gordita || '';
+  g('edit-other').value = r.other || '';
+  g('edit-run-notes').value = r.notes || '';
+  // Items produced
+  const container = g('edit-items-container');
+  container.innerHTML = '';
+  editItemCount = 0;
+  (r.items || []).forEach(item => addEditItem(item.name, item.cases));
+  if ((r.items || []).length === 0) addEditItem();
+  // Show modal
+  g('edit-run-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function addEditItem(name='', cases='') {
+  editItemCount++;
+  const div = document.createElement('div');
+  div.className = 'item-entry';
+  div.id = 'edit-item-' + editItemCount;
+  div.innerHTML = `
+    <div class="item-entry-header">
+      <div class="item-num">Item ${editItemCount}</div>
+      <button class="remove-btn" onclick="this.closest('.item-entry').remove()">✕</button>
+    </div>
+    <div class="form-group"><label>Product</label>
+      <select class="edit-item-select">
+        ${PRODUCTS.map(p=>`<option value="${p}"${p===name?' selected':''}>${p}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group"><label>Cases Produced</label>
+      <input type="number" inputmode="numeric" class="edit-item-cases" value="${cases}" placeholder="0">
+    </div>`;
+  g('edit-items-container').appendChild(div);
+}
+
+function closeEditRun() {
+  g('edit-run-modal').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function egv(id) { const el=g(id); return el ? (parseFloat(el.value)||0) : 0; }
+function egt(id) { const el=g(id); return el ? el.value.trim() : ''; }
+
+async function saveEditRun() {
+  const id = parseInt(g('edit-run-id').value);
+  const flour = egv('edit-flour');
+  const changedBy = egt('edit-run-changed-by');
+  if (!egt('edit-run-date') || flour === 0) {
+    showToast('⚠ Date and flour are required', true); return;
+  }
+  if (!changedBy) { showToast('⚠ Please enter your name in "Changed By"', true); return; }
+  // Collect items
+  const items = [];
+  let totalCases = 0;
+  document.querySelectorAll('#edit-items-container .item-entry').forEach(entry => {
+    const name = entry.querySelector('.edit-item-select')?.value || '';
+    const cases = parseFloat(entry.querySelector('.edit-item-cases')?.value) || 0;
+    if (name && cases > 0) { items.push({name, cases}); totalCases += cases; }
+  });
+  const ratio = totalCases > 0 ? (flour / totalCases).toFixed(2) : '0';
+
+  const updated = {
+    date: egt('edit-run-date'), shift: egt('edit-run-shift'), operator: egt('edit-run-operator'),
+    flour, lot_flour: egt('edit-lot-flour'), silo_flour: egt('edit-silo-flour'),
+    water: egv('edit-water'),
+    oil: egv('edit-oil'), lot_oil: egt('edit-lot-oil'),
+    calciump: egv('edit-calciump'), lot_calciump: egt('edit-lot-calciump'),
+    sodiump: egv('edit-sodiump'), lot_sodiump: egt('edit-lot-sodiump'),
+    bakingp: egv('edit-bakingp'), lot_bakingp: egt('edit-lot-bakingp'),
+    salt: egv('edit-salt'), lot_salt: egt('edit-lot-salt') || '',
+    fumaric: egv('edit-fumaric'), lot_fumaric: egt('edit-lot-fumaric'),
+    guar: egv('edit-guar'), lot_guar: egt('edit-lot-guar'),
+    enzyme: egv('edit-enzyme'), lot_enzyme: egt('edit-lot-enzyme'),
+    beta: egv('edit-beta'), lot_beta: egt('edit-lot-beta'),
+    gordita: egv('edit-gordita'),
+    items_json: JSON.stringify(items), total_cases: totalCases, ratio,
+    other: egt('edit-other'), notes: egt('edit-run-notes')
+  };
+
+  showLoading('Saving changes…');
+  try {
+    const oldRun = runs.find(x => x.id === id) || {};
+    await sbUpdate('production_runs', id, updated);
+    const diff = buildDiff(oldRun, updated);
+    await writeAudit({
+      action: 'EDITED', record_type: 'Production Run',
+      record_date: oldRun.date || updated.date,
+      changed_by: changedBy, diff,
+      changed_at: new Date().toISOString()
+    });
+    // Update local state
+    const idx = runs.findIndex(x => x.id === id);
+    if (idx !== -1) runs[idx] = { ...runs[idx], ...updated, items, totalCases };
+    closeEditRun();
+    refreshDashboard();
+    renderHistory();
+    showToast('✓ Run updated!');
+  } catch(err) {
+    showToast('⚠ Error: ' + err.message, true);
+  } finally { hideLoading(); }
+}
+
+async function confirmDeleteRun() {
+  const id = parseInt(g('edit-run-id').value);
+  const changedBy = egt('edit-run-changed-by');
+  if (!changedBy) { showToast('⚠ Please enter your name in "Changed By" before deleting', true); return; }
+  const run = runs.find(x => x.id === id);
+  const label = run ? run.date + ' — ' + run.totalCases + ' cases' : 'this run';
+  if (!confirm(`Delete ${label}?\n\nThis cannot be undone.`)) return;
+  showLoading('Deleting…');
+  try {
+    const snapshot = runs.find(x => x.id === id) || {};
+    await sbDelete('production_runs', id);
+    await writeAudit({
+      action: 'DELETED', record_type: 'Production Run',
+      record_date: snapshot.date || '—',
+      changed_by: changedBy,
+      diff: `Deleted run: ${snapshot.date||'?'} · ${snapshot.totalCases||0} cases · ${snapshot.flour||0} lbs flour · Operator: ${snapshot.operator||'—'}`,
+      changed_at: new Date().toISOString()
+    });
+    runs = runs.filter(x => x.id !== id);
+    closeEditRun();
+    refreshDashboard();
+    renderHistory();
+    showToast('✓ Run deleted');
+  } catch(err) {
+    showToast('⚠ Error: ' + err.message, true);
+  } finally { hideLoading(); }
+}
+
+async function quickDeleteRun(id) {
+  const run = runs.find(x => x.id === id);
+  const label = run ? run.date + ' — ' + run.totalCases + ' cases' : 'this run';
+  if (!confirm(`Delete ${label}?\n\nThis cannot be undone.`)) return;
+  const changedBy = prompt('Your name (for audit log):');
+  if (!changedBy) return;
+  showLoading('Deleting…');
+  try {
+    const snapshot = run || {};
+    await sbDelete('production_runs', id);
+    await writeAudit({
+      action: 'DELETED', record_type: 'Production Run',
+      record_date: snapshot.date || '—',
+      changed_by: changedBy,
+      diff: `Quick-deleted run: ${snapshot.date||'?'} · ${snapshot.totalCases||0} cases · ${snapshot.flour||0} lbs flour`,
+      changed_at: new Date().toISOString()
+    });
+    runs = runs.filter(x => x.id !== id);
+    refreshDashboard();
+    renderHistory();
+    showToast('✓ Run deleted');
+  } catch(err) {
+    showToast('⚠ Error: ' + err.message, true);
+  } finally { hideLoading(); }
+}
+
+// ============================================================
+// EDIT RECEIPT MODAL
+// ============================================================
+function openEditReceipt(id) {
+  const r = receipts.find(x => x.id === id);
+  if (!r) return;
+  g('edit-receipt-id').value = id;
+  g('edit-recv-date').value = r.date || '';
+  g('edit-recv-supplier').value = r.supplier || '';
+  g('edit-recv-po').value = r.po || '';
+  g('edit-recv-flour-lbs').value = r.flour_lbs || '';
+  g('edit-recv-flour-bags').value = r.flour_bags || '';
+  g('edit-recv-flour-lot').value = r.flour_lot || '';
+  g('edit-recv-oil').value = r.oil || '';
+  g('edit-recv-oil-lot').value = r.oil_lot || '';
+  g('edit-recv-beta').value = r.beta || '';
+  g('edit-recv-beta-lot').value = r.beta_lot || '';
+  g('edit-recv-other').value = r.other || '';
+  g('edit-recv-notes').value = r.notes || '';
+  g('edit-receipt-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEditReceipt() {
+  g('edit-receipt-modal').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+async function saveEditReceipt() {
+  const id = parseInt(g('edit-receipt-id').value);
+  const changedBy = egt('edit-recv-changed-by');
+  if (!egt('edit-recv-date')) { showToast('⚠ Date is required', true); return; }
+  if (!changedBy) { showToast('⚠ Please enter your name in "Changed By"', true); return; }
+  const updated = {
+    date: egt('edit-recv-date'), supplier: egt('edit-recv-supplier'), po: egt('edit-recv-po'),
+    flour_lbs: egv('edit-recv-flour-lbs'), flour_bags: egv('edit-recv-flour-bags'),
+    flour_lot: egt('edit-recv-flour-lot'),
+    oil: egv('edit-recv-oil'), oil_lot: egt('edit-recv-oil-lot'),
+    beta: egv('edit-recv-beta'), beta_lot: egt('edit-recv-beta-lot'),
+    other: egt('edit-recv-other'), notes: egt('edit-recv-notes')
+  };
+  showLoading('Saving changes…');
+  try {
+    const oldRec = receipts.find(x => x.id === id) || {};
+    await sbUpdate('receipts', id, updated);
+    const diff = buildDiff(oldRec, updated);
+    await writeAudit({
+      action: 'EDITED', record_type: 'Receipt',
+      record_date: oldRec.date || updated.date,
+      changed_by: changedBy, diff,
+      changed_at: new Date().toISOString()
+    });
+    const idx = receipts.findIndex(x => x.id === id);
+    if (idx !== -1) receipts[idx] = { ...receipts[idx], ...updated };
+    closeEditReceipt();
+    renderHistory();
+    showToast('✓ Receipt updated!');
+  } catch(err) {
+    showToast('⚠ Error: ' + err.message, true);
+  } finally { hideLoading(); }
+}
+
+async function confirmDeleteReceipt() {
+  const id = parseInt(g('edit-receipt-id').value);
+  const changedBy = egt('edit-recv-changed-by');
+  if (!changedBy) { showToast('⚠ Please enter your name in "Changed By" before deleting', true); return; }
+  const rec = receipts.find(x => x.id === id);
+  const label = rec ? rec.date + (rec.supplier ? ' — ' + rec.supplier : '') : 'this receipt';
+  if (!confirm(`Delete ${label}?\n\nThis cannot be undone.`)) return;
+  showLoading('Deleting…');
+  try {
+    const snapshot = rec || {};
+    await sbDelete('receipts', id);
+    await writeAudit({
+      action: 'DELETED', record_type: 'Receipt',
+      record_date: snapshot.date || '—',
+      changed_by: changedBy,
+      diff: `Deleted receipt: ${snapshot.date||'?'} · ${snapshot.flour_lbs||0} lbs flour · Supplier: ${snapshot.supplier||'—'}`,
+      changed_at: new Date().toISOString()
+    });
+    receipts = receipts.filter(x => x.id !== id);
+    closeEditReceipt();
+    renderHistory();
+    showToast('✓ Receipt deleted');
+  } catch(err) {
+    showToast('⚠ Error: ' + err.message, true);
+  } finally { hideLoading(); }
+}
+
+async function quickDeleteReceipt(id) {
+  const rec = receipts.find(x => x.id === id);
+  const label = rec ? rec.date + (rec.supplier ? ' — ' + rec.supplier : '') : 'this receipt';
+  if (!confirm(`Delete ${label}?\n\nThis cannot be undone.`)) return;
+  const changedBy = prompt('Your name (for audit log):');
+  if (!changedBy) return;
+  showLoading('Deleting…');
+  try {
+    const snapshot = rec || {};
+    await sbDelete('receipts', id);
+    await writeAudit({
+      action: 'DELETED', record_type: 'Receipt',
+      record_date: snapshot.date || '—',
+      changed_by: changedBy,
+      diff: `Quick-deleted receipt: ${snapshot.date||'?'} · ${snapshot.flour_lbs||0} lbs flour · Supplier: ${snapshot.supplier||'—'}`,
+      changed_at: new Date().toISOString()
+    });
+    receipts = receipts.filter(x => x.id !== id);
+    renderHistory();
+    showToast('✓ Receipt deleted');
+  } catch(err) {
+    showToast('⚠ Error: ' + err.message, true);
+  } finally { hideLoading(); }
+}
+
+
+// ============================================================
+// AUDIT LOG — STATE & PIN
+// ============================================================
+const AUDIT_PIN = '2123';
+let auditUnlocked = false;
+let auditPinBuf = '';
+let auditLogs = [];
+let auditFilter = 'all';
+
+function auditPinPress(d) {
+  if (auditPinBuf.length >= 4) return;
+  auditPinBuf += d;
+  updateAuditDots(auditPinBuf.length, false);
+  if (auditPinBuf.length === 4) setTimeout(checkAuditPin, 120);
+}
+function auditPinDel() {
+  auditPinBuf = auditPinBuf.slice(0,-1);
+  updateAuditDots(auditPinBuf.length, false);
+}
+function updateAuditDots(count, error) {
+  for (let i=0;i<4;i++) {
+    const d = document.getElementById('adot-'+i);
+    if (d) d.className = 'audit-pin-dot'+(i<count?(error?' error':' filled'):'');
+  }
+}
+function checkAuditPin() {
+  if (auditPinBuf === AUDIT_PIN) {
+    auditUnlocked = true;
+    g('audit-gate').style.display = 'none';
+    g('audit-content').style.display = 'block';
+    loadAuditLogs();
+  } else {
+    updateAuditDots(4, true);
+    g('audit-pin-err').textContent = 'Incorrect PIN.';
+    setTimeout(()=>{ auditPinBuf=''; updateAuditDots(0,false); g('audit-pin-err').textContent=''; }, 1200);
+  }
+}
+function lockAuditLog() {
+  auditUnlocked = false;
+  auditPinBuf = '';
+  updateAuditDots(0, false);
+  g('audit-gate').style.display = '';
+  g('audit-content').style.display = 'none';
+  // Also hide the tab again
+  const tab = g('tab-audit');
+  if (tab) tab.style.display = 'none';
+  showTab('dash');
+}
+
+// ============================================================
+// AUDIT LOG — SUPABASE WRITE
+// ============================================================
+async function writeAudit(entry) {
+  try {
+    await SB.insert('audit_log', entry);
+    auditLogs.unshift(entry); // add to local cache
+  } catch(err) {
+    console.warn('Audit log write failed:', err.message);
+    // Non-blocking — don't show error to user, audit is silent
+  }
+}
+
+// Build a human-readable diff between old and new objects
+function buildDiff(oldObj, newObj) {
+  const LABELS = {
+    date:'Date', shift:'Shift', operator:'Operator',
+    flour:'Flour (lbs)', lot_flour:'Flour Lot', silo_flour:'Silo #',
+    water:'Water (lbs)', oil:'Oil (cases)', lot_oil:'Oil Lot',
+    calciump:'Calcium P.', lot_calciump:'Calcium Lot',
+    sodiump:'Sodium P.', lot_sodiump:'Sodium Lot',
+    bakingp:'Baking P.', lot_bakingp:'Baking Lot',
+    salt:'Salt (lbs)', lot_salt:'Salt Lot',
+    fumaric:'Fumaric Acid', lot_fumaric:'Fumaric Lot',
+    guar:'Guar Gum', lot_guar:'Guar Lot',
+    enzyme:'Enzyme Blend', lot_enzyme:'Enzyme Lot',
+    beta:'Beta Tablets', lot_beta:'Beta Lot',
+    gordita:'Gordita Bags',
+    items_json:'Items Produced', total_cases:'Total Cases', ratio:'lbs/case',
+    other:'Other', notes:'Notes',
+    supplier:'Supplier', po:'PO #',
+    flour_lbs:'Flour (lbs)', flour_bags:'Flour Bags', flour_lot:'Flour Lot',
+    oil_lot:'Oil Lot', beta_lot:'Beta Lot',
+  };
+  const changes = [];
+  const keys = new Set([...Object.keys(oldObj||{}), ...Object.keys(newObj||{})]);
+  keys.forEach(k => {
+    if (['id','created_at','updated_at'].includes(k)) return;
+    const ov = String(oldObj?.[k] ?? '');
+    const nv = String(newObj?.[k] ?? '');
+    if (ov !== nv) {
+      const label = LABELS[k] || k;
+      changes.push(`${label}: "${ov}" → "${nv}"`);
+    }
+  });
+  return changes.join(' | ') || 'No field changes detected';
+}
+
+// ============================================================
+// AUDIT LOG — LOAD & RENDER
+// ============================================================
+async function loadAuditLogs() {
+  showLoading('Loading audit log…');
+  try {
+    auditLogs = await SB.get('audit_log', '&limit=1000');
+    renderAuditLog();
+  } catch(err) {
+    showToast('⚠ Could not load audit log: ' + err.message, true);
+  } finally { hideLoading(); }
+}
+
+function setAuditFilter(f, btn) {
+  auditFilter = f;
+  document.querySelectorAll('#audit-filter-bar .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAuditLog();
+}
+
+function renderAuditLog() {
+  const filtered = filterByDate(auditLogs, auditFilter);
+  const body = g('audit-body');
+
+  // Summary counts
+  const edits = filtered.filter(a=>a.action==='EDITED').length;
+  const deletes = filtered.filter(a=>a.action==='DELETED').length;
+  g('audit-summary').innerHTML =
+    `<span class="audit-badge edited">✏️ ${edits} Edit${edits!==1?'s':''}</span>` +
+    `<span class="audit-badge deleted">🗑 ${deletes} Deletion${deletes!==1?'s':''}</span>` +
+    `<span style="font-size:13px;color:var(--text3);padding:4px 0;">${filtered.length} total records</span>`;
+
+  if (filtered.length === 0) {
+    body.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">No audit records for this period</div></div></td></tr>`;
+    return;
+  }
+
+  body.innerHTML = filtered.map(a => {
+    const ts = a.changed_at ? new Date(a.changed_at).toLocaleString() : '—';
+    const badge = a.action === 'DELETED'
+      ? `<span class="audit-badge deleted">🗑 DELETED</span>`
+      : `<span class="audit-badge edited">✏️ EDITED</span>`;
+    const diff = a.diff || '—';
+    // Truncate long diffs in table, show full on expand
+    const shortDiff = diff.length > 120 ? diff.slice(0,120)+'…' : diff;
+    return `<tr>
+      <td style="white-space:nowrap;font-size:13px;">${ts}</td>
+      <td>${badge}</td>
+      <td style="font-weight:700;color:var(--text);">${a.record_type||'—'}</td>
+      <td>${a.record_date||'—'}</td>
+      <td style="color:var(--accent);font-weight:700;">${a.changed_by||'—'}</td>
+      <td style="font-size:12px;color:var(--text2);line-height:1.5;">${shortDiff}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportAuditLog() {
+  const filtered = filterByDate(auditLogs, auditFilter);
+  if (!filtered.length) { showToast('⚠ No audit records to export', true); return; }
+  const rows = filtered.map(a => ({
+    'Date & Time': a.changed_at ? new Date(a.changed_at).toLocaleString() : '—',
+    'Action': a.action || '—',
+    'Record Type': a.record_type || '—',
+    'Record Date': a.record_date || '—',
+    'Changed By': a.changed_by || '—',
+    'What Changed (Full)': a.diff || '—',
+  }));
+  dlExcel([{name:'Audit Log', data:rows}], 'Atotonilco_AuditLog_'+getLabel(auditFilter));
+}
+
+// ============================================================
+// AUDIT LOG — UNLOCK VIA SETTINGS (secret entry point)
+// ============================================================
+function revealAuditTab() {
+  const tab = g('tab-audit');
+  if (tab) { tab.style.display = ''; showTab('audit'); }
+}
+
+let _vtaps = 0, _vtimer = null;
+function versionTap() {
+  _vtaps++;
+  clearTimeout(_vtimer);
+  _vtimer = setTimeout(()=>{ _vtaps=0; }, 2000);
+  if (_vtaps >= 7) {
+    _vtaps = 0;
+    revealAuditTab();
+  }
 }
 
 // ============================================================
