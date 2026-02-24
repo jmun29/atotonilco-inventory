@@ -269,7 +269,19 @@
 
         <!-- FLOUR -->
         <div class="ing-row"><div class="ing-row-header"><span class="ing-name" data-t="ingFlour">Flour</span><span class="ing-unit-badge">lbs</span></div>
-          <div class="form-row-2"><div class="form-group"><label data-t="quantityLbs">Quantity (lbs)</label><input type="number" inputmode="decimal" id="ing-flour" placeholder="0" oninput="updateSummary()"></div><div class="form-group"><label data-t="lotNumber">Lot Number</label><input type="text" id="lot-flour" placeholder="LOT-XXXX"></div></div></div>
+          <div class="form-row-3">
+            <div class="form-group"><label data-t="quantityLbs">Quantity (lbs)</label><input type="number" inputmode="decimal" id="ing-flour" placeholder="0" oninput="updateSummary()"></div>
+            <div class="form-group"><label data-t="lotNumber">Lot Number</label><input type="text" id="lot-flour" placeholder="LOT-XXXX"></div>
+            <div class="form-group"><label data-t="siloNumber">Silo # <span style="color:var(--red);font-size:13px;">&#9733;</span></label>
+              <select id="silo-flour">
+                <option value="">&#8212; Select &#8212;</option>
+                <option value="Silo 1">Silo 1</option>
+                <option value="Silo 2">Silo 2</option>
+                <option value="Silo 3">Silo 3</option>
+              </select>
+            </div>
+          </div>
+        </div>
         <!-- WATER -->
         <div class="ing-row"><div class="ing-row-header"><span class="ing-name" data-t="ingWater">Water</span><span class="ing-unit-badge">lbs</span></div>
           <div class="form-group"><label data-t="quantityLbs">Quantity (lbs)</label><input type="number" inputmode="decimal" id="ing-water" placeholder="0"></div></div>
@@ -541,6 +553,7 @@ const T = {
     change:'Change',clearAllData:'Clear All Local Data',clearAllDataSub:'Does not delete Supabase data',
     clearData:'Clear',appVersion:'Version',
     itemLabel:'Item',casesProduced:'Cases Produced',
+    siloNumber:'Silo #',
     runSaved:'✓ Run saved to cloud!',receiptSaved:'✓ Receipt saved to cloud!',
     flourStock:'Flour',oilStock:'Oil',betaStock:'Beta Tablets',
   },
@@ -581,6 +594,7 @@ const T = {
     change:'Cambiar',clearAllData:'Borrar Datos Locales',clearAllDataSub:'No borra datos de Supabase',
     clearData:'Borrar',appVersion:'Versión',
     itemLabel:'Artículo',casesProduced:'Cajas Producidas',
+    siloNumber:'Silo #',
     runSaved:'✓ ¡Corrida guardada en la nube!',receiptSaved:'✓ ¡Recibo guardado en la nube!',
     flourStock:'Harina',oilStock:'Aceite',betaStock:'Tabletas Beta',
   }
@@ -706,7 +720,23 @@ function showTab(id) {
 // ============================================================
 // ITEMS
 // ============================================================
-const PRODUCTS = ['Burrito #1','Burrito #2','Burrito #3','Gordita','Other / Otro'];
+const PRODUCTS = [
+  // Burritos
+  'Burrito #1', 'Burrito #2', 'Burrito #3', 'Burrito #3.5',
+  'Burrito #4', 'Burrito #6', 'Burrito #8',
+  // Trigo
+  'Trigo #8', 'Baja 06311 Trigo #10',
+  // Harina
+  'Harina Especial', 'Harina Regular', 'Harina 5.5',
+  // Authentico
+  'Authentico 06 (HE)', 'Authentico 08 (#8)',
+  // Baby
+  'Baby 4.0', 'Baby 4.5', 'Baby 5.0',
+  // Other brands
+  'Tonys', 'Mi Barrio',
+  // Catch-all
+  'Other / Otro'
+];
 function addItem() {
   itemCount++;
   const div=document.createElement('div');
@@ -757,8 +787,9 @@ function showToast(msg,warn){
 // SAVE RUN → Supabase
 // ============================================================
 async function saveRun() {
-  const date=gt('run-date'), flour=gv('ing-flour');
+  const date=gt('run-date'), flour=gv('ing-flour'), silo=gt('silo-flour');
   if (!date||flour===0){showToast('⚠ '+(currentLang==='es'?'Ingrese fecha y harina':'Enter date and flour amount'),true);return;}
+  if (!silo){showToast('⚠ '+(currentLang==='es'?'Seleccione el Número de Silo':'Select a Silo # for flour'),true);return;}
 
   const items=[];let totalCases=0;
   document.querySelectorAll('.item-entry').forEach(entry=>{
@@ -769,7 +800,7 @@ async function saveRun() {
 
   const run={
     date, shift:gt('run-shift'), operator:gt('run-operator'),
-    flour, lot_flour:gt('lot-flour'),
+    flour, lot_flour:gt('lot-flour'), silo_flour:gt('silo-flour'),
     water:gv('ing-water'),
     oil:gv('ing-oil'), lot_oil:gt('lot-oil'),
     calciump:gv('ing-calciump'), lot_calciump:gt('lot-calciump'),
@@ -813,6 +844,8 @@ function clearRun(){
    'ing-bakingp','lot-bakingp','ing-salt','lot-salt','ing-fumaric','lot-fumaric',
    'ing-guar','lot-guar','ing-enzyme','lot-enzyme','ing-beta','lot-beta',
    'ing-gordita','ing-other','run-notes'].forEach(id=>{
+    // also reset silo
+    if(id==='run-date'){const s=g('silo-flour');if(s)s.value='';}
     const el=g(id);if(el)el.value=id==='run-date'?new Date().toISOString().split('T')[0]:'';
   });
   g('items-container').innerHTML='';itemCount=0;updateSummary();addItem();
@@ -933,7 +966,7 @@ function dlExcel(sheets,fname){
   sheets.forEach(s=>{const ws=XLSX.utils.json_to_sheet(s.data);ws['!cols']=Object.keys(s.data[0]||{}).map(k=>({wch:Math.max(k.length,12)}));XLSX.utils.book_append_sheet(wb,ws,s.name);});
   XLSX.writeFile(wb,fname+'.xlsx');showToast('✓ Downloaded: '+fname+'.xlsx');
 }
-function runsToRows(data){return data.map(r=>({'Date':r.date,'Shift':r.shift,'Operator':r.operator||'','Items':r.items.map(i=>i.name+': '+i.cases+' cases').join(' | '),'Total Cases':r.totalCases,'Flour (lbs)':r.flour,'Flour Lot':r.lot_flour||'','Water (lbs)':r.water,'Oil (cases)':r.oil,'Oil Lot':r.lot_oil||'','Calcium P.':r.calciump,'Cal. Lot':r.lot_calciump||'','Sodium P.':r.sodiump,'Sod. Lot':r.lot_sodiump||'','Baking P.':r.bakingp,'Bak. Lot':r.lot_bakingp||'','Salt (lbs)':r.salt,'Salt Lot':r.lot_salt||'','Fumaric Acid':r.fumaric,'Fum. Lot':r.lot_fumaric||'','Guar Gum':r.guar,'Guar Lot':r.lot_guar||'','Enzyme Blend':r.enzyme,'Enz. Lot':r.lot_enzyme||'','Beta Tablets':r.beta,'Beta Lot':r.lot_beta||'','Gordita Bags':r.gordita,'lbs/case':r.ratio,'Other':r.other||'','Notes':r.notes||''}))}
+function runsToRows(data){return data.map(r=>({'Date':r.date,'Shift':r.shift,'Operator':r.operator||'','Items':r.items.map(i=>i.name+': '+i.cases+' cases').join(' | '),'Total Cases':r.totalCases,'Flour (lbs)':r.flour,'Flour Lot':r.lot_flour||'','Flour Silo':r.silo_flour||'','Water (lbs)':r.water,'Oil (cases)':r.oil,'Oil Lot':r.lot_oil||'','Calcium P.':r.calciump,'Cal. Lot':r.lot_calciump||'','Sodium P.':r.sodiump,'Sod. Lot':r.lot_sodiump||'','Baking P.':r.bakingp,'Bak. Lot':r.lot_bakingp||'','Salt (lbs)':r.salt,'Salt Lot':r.lot_salt||'','Fumaric Acid':r.fumaric,'Fum. Lot':r.lot_fumaric||'','Guar Gum':r.guar,'Guar Lot':r.lot_guar||'','Enzyme Blend':r.enzyme,'Enz. Lot':r.lot_enzyme||'','Beta Tablets':r.beta,'Beta Lot':r.lot_beta||'','Gordita Bags':r.gordita,'lbs/case':r.ratio,'Other':r.other||'','Notes':r.notes||''}))}
 function exportRuns(p){const d=filterByDate(runs,p);if(!d.length){showToast('⚠ No data',true);return;}dlExcel([{name:'Production Runs',data:runsToRows(d)}],'Atotonilco_Runs_'+getLabel(p));}
 function exportReceipts(p){const d=filterByDate(receipts,p);if(!d.length){showToast('⚠ No data',true);return;}dlExcel([{name:'Receipts',data:d.map(r=>({'Date':r.date,'Supplier':r.supplier||'','PO':r.po||'','Flour (lbs)':r.flour_lbs,'Flour Bags':r.flour_bags,'Flour Lot':r.flour_lot||'','Oil (cases)':r.oil,'Oil Lot':r.oil_lot||'','Beta Tablets':r.beta,'Beta Lot':r.beta_lot||'','Other':r.other||''}))}],'Atotonilco_Receipts_'+getLabel(p));}
 function exportFull(p){const rd=filterByDate(runs,p),rcd=filterByDate(receipts,p);const sheets=[];if(rd.length)sheets.push({name:'Production Runs',data:runsToRows(rd)});if(rcd.length)sheets.push({name:'Receipts',data:rcd.map(r=>({'Date':r.date,'Supplier':r.supplier||'','PO':r.po||'','Flour (lbs)':r.flour_lbs,'Flour Lot':r.flour_lot||'','Oil':r.oil,'Beta Tabs':r.beta,'Other':r.other||''}))});if(!sheets.length){showToast('⚠ No data',true);return;}dlExcel(sheets,'Atotonilco_FullReport_'+getLabel(p));}
