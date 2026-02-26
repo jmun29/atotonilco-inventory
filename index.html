@@ -238,6 +238,16 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
 .audit-badge.deleted{background:#3a1a1a;color:var(--red);border:1px solid var(--red);}
 .audit-lock-btn{background:var(--surface2);border:2px solid var(--border);border-radius:8px;color:var(--text3);font-size:13px;font-weight:700;padding:6px 14px;cursor:pointer;font-family:var(--font-display);}
 
+.btn-edit-row{background:var(--surface3);border:1px solid var(--border);border-radius:6px;color:var(--blue);font-size:14px;padding:5px 9px;cursor:pointer;}
+.btn-edit-row:active{opacity:0.7;}
+.item-tag.red{background:#3a1a1a;color:var(--red);border:1px solid var(--red);}
+.item-tag.green{background:#1a3a2a;color:var(--green);border:1px solid var(--green);}
+.item-tag.accent{background:#2a1e0a;color:var(--accent);border:1px solid var(--accent-dark);}
+.modal-section{font-family:var(--font-display);font-size:13px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;}
+.modal-btn-row{display:flex;gap:10px;margin-top:18px;}
+.modal-btn-row .btn{flex:1;}
+.btn-delete{background:var(--red);color:#fff;border:none;border-radius:10px;font-family:var(--font-display);font-size:15px;font-weight:800;padding:14px;cursor:pointer;}
+.btn-delete:active{opacity:0.7;}
 /* PHASE 2 PLACEHOLDER */
 .phase2-placeholder{background:var(--surface2);border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;color:var(--text3);}
 .phase2-placeholder .p2-icon{font-size:36px;margin-bottom:8px;}
@@ -306,6 +316,13 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
 
     <!-- ═══════════════ DASHBOARD ═══════════════ -->
     <div class="panel active" id="panel-dash">
+      <!-- Discrepancy Warning (hidden until audit logs exist) -->
+      <div id="dash-discrepancy-banner" style="display:none;background:#3a1a1a;border:2px solid var(--red);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+        <div style="font-family:var(--font-display);font-size:15px;font-weight:800;color:var(--red);margin-bottom:6px;">⚠️ Warehouse Discrepancies Logged</div>
+        <div id="dash-discrepancy-list" style="font-size:13px;color:var(--text2);line-height:1.8;"></div>
+        <button onclick="showTab('warehouse')" style="margin-top:8px;background:var(--red);color:#fff;border:none;border-radius:8px;font-family:var(--font-display);font-size:13px;font-weight:800;padding:7px 16px;cursor:pointer;">View in Warehouse →</button>
+      </div>
+
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-value" id="stat-total-cases">—</div><div class="stat-label" data-i18n="statCasesWeek">Cases This Week</div></div>
         <div class="stat-card"><div class="stat-value" id="stat-runs">—</div><div class="stat-label" data-i18n="statRunsWeek">Runs This Week</div></div>
@@ -517,6 +534,41 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
         </div>
         <div id="warehouse-grid"></div>
       </div>
+
+      <div class="card">
+        <div class="card-title">🔎 Warehouse Audit — Physical Count</div>
+        <p style="font-size:13px;color:var(--text3);margin-bottom:14px;line-height:1.5;">Enter the actual physical count for a product+date. If it differs from the system balance, provide a reason and the system will log the adjustment.</p>
+        <div class="form-row-2">
+          <div class="form-group"><label>Product</label>
+            <select id="audit-product" onchange="loadAuditDates()">
+              <option value="">— Select Product —</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Production Date</label>
+            <select id="audit-prod-date" onchange="showAuditSystemBalance()">
+              <option value="">— Select product first —</option>
+            </select>
+          </div>
+        </div>
+        <div id="audit-system-balance" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;font-size:14px;color:var(--text3);display:none;">
+          <span style="font-weight:800;color:var(--text);">System Balance: </span><span id="audit-system-qty" style="color:var(--accent);font-weight:800;font-size:18px;">—</span> cases
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Actual Physical Count (cases)</label><input type="number" inputmode="numeric" id="audit-physical-count" placeholder="0" oninput="showAuditDiff()"></div>
+          <div class="form-group"><label>Audited By</label><input type="text" id="audit-by" placeholder="Your name"></div>
+        </div>
+        <div id="audit-diff-display" style="display:none;padding:10px;border-radius:8px;margin-bottom:12px;font-weight:700;font-size:15px;"></div>
+        <div class="form-group" id="audit-reason-group" style="display:none;">
+          <label>Reason for Discrepancy ★</label>
+          <input type="text" id="audit-reason" placeholder="e.g. Damaged cases, counting error, transfer not logged…">
+        </div>
+        <button class="btn btn-green" onclick="saveWarehouseAudit()">✅ Save Audit / Adjustment</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📋 Recent Audit Adjustments</div>
+        <div id="warehouse-audit-log"></div>
+      </div>
     </div>
 
     <!-- ═══════════════ RECEIVE ═══════════════ -->
@@ -641,6 +693,36 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
           </tr></thead><tbody id="history-body"></tbody></table>
         </div>
       </div>
+
+      <div class="card">
+        <div class="card-title">🧪 Formula Batch History</div>
+        <div class="filter-bar" id="batch-hist-filter-bar">
+          <button class="filter-btn active" onclick="setBatchHistFilter('all',this)">All</button>
+          <button class="filter-btn" onclick="setBatchHistFilter('week',this)">This Week</button>
+          <button class="filter-btn" onclick="setBatchHistFilter('month',this)">This Month</button>
+        </div>
+        <div class="log-wrapper">
+          <table class="log-table"><thead><tr>
+            <th>Date</th><th>Type</th><th>Qty Created</th><th>Key Ingredients</th><th>Notes</th><th></th>
+          </tr></thead><tbody id="batch-hist-body"></tbody></table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🚚 Shipping History</div>
+        <div class="filter-bar" id="ship-hist-filter-bar">
+          <button class="filter-btn active" onclick="setShipHistFilter('all',this)">All</button>
+          <button class="filter-btn" onclick="setShipHistFilter('today',this)">Today</button>
+          <button class="filter-btn" onclick="setShipHistFilter('week',this)">This Week</button>
+          <button class="filter-btn" onclick="setShipHistFilter('month',this)">This Month</button>
+        </div>
+        <div class="log-wrapper">
+          <table class="log-table"><thead><tr>
+            <th>Date</th><th>Recipient</th><th>Items Shipped</th><th>Total Cases</th><th></th>
+          </tr></thead><tbody id="ship-hist-body"></tbody></table>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-title">📦 <span data-i18n="receiptHistory">Receipt History</span></div>
         <div class="log-wrapper">
@@ -744,7 +826,7 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
 
         <div style="padding:16px 0;">
           <div style="font-size:17px;font-weight:700;">Version</div>
-          <div style="font-size:13px;color:var(--text3);cursor:default;" id="version-tap" onclick="versionTap()">v4.0 — Feb 2026 · inventory-system · Supabase enabled</div>
+          <div style="font-size:13px;color:var(--text3);cursor:default;" id="version-tap" onclick="versionTap()">v4.1 — Feb 2026 · inventory-system · Supabase enabled</div>
         </div>
       </div>
       <div class="card">
@@ -874,6 +956,59 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
   </div>
 </div>
 
+<!-- ═══ EDIT BATCH MODAL ═══ -->
+<div class="modal-overlay hidden" id="edit-batch-modal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">✏️ Edit Formula Batch</div>
+      <button class="modal-close" onclick="closeEditBatch()">✕</button>
+    </div>
+    <input type="hidden" id="edit-batch-id">
+    <input type="hidden" id="edit-batch-type">
+    <div class="form-row-2">
+      <div class="form-group"><label>Date</label><input type="date" id="edit-batch-date"></div>
+      <div id="edit-batch-qty-wrap">
+        <!-- filled dynamically based on batch type -->
+      </div>
+    </div>
+    <div id="edit-batch-ings"><!-- ingredient fields inserted here --></div>
+    <div class="form-group"><label>Notes</label><input type="text" id="edit-batch-notes"></div>
+    <div class="form-group"><label style="color:var(--red);font-weight:800;">★ Changed By (required)</label>
+      <input type="text" id="edit-batch-changed-by" placeholder="Your name" style="border-color:var(--blue);">
+    </div>
+    <div class="modal-btn-row">
+      <button class="btn" onclick="saveEditBatch()">💾 Save Changes</button>
+      <button class="btn-delete" onclick="confirmDeleteBatch()">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EDIT SHIPMENT MODAL ═══ -->
+<div class="modal-overlay hidden" id="edit-ship-modal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">✏️ Edit Shipment</div>
+      <button class="modal-close" onclick="closeEditShip()">✕</button>
+    </div>
+    <input type="hidden" id="edit-ship-id">
+    <div class="form-row-2">
+      <div class="form-group"><label>Date</label><input type="date" id="edit-ship-date"></div>
+      <div class="form-group"><label>Recipient / Destination</label><input type="text" id="edit-ship-recipient" placeholder="—"></div>
+    </div>
+    <div class="form-group"><label>PO / Reference #</label><input type="text" id="edit-ship-po" placeholder="—"></div>
+    <div class="modal-section">Items Shipped</div>
+    <div id="edit-ship-items"><!-- rows inserted here --></div>
+    <div class="form-group" style="margin-top:8px;"><label>Notes</label><textarea id="edit-ship-notes" style="min-height:60px;"></textarea></div>
+    <div class="form-group"><label style="color:var(--red);font-weight:800;">★ Changed By (required)</label>
+      <input type="text" id="edit-ship-changed-by" placeholder="Your name" style="border-color:var(--blue);">
+    </div>
+    <div class="modal-btn-row">
+      <button class="btn" onclick="saveEditShip()">💾 Save Changes</button>
+      <button class="btn-delete" onclick="confirmDeleteShipFromModal()">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -917,9 +1052,9 @@ const SB = {
 // STATE
 // ============================================================
 let currentLang='en';
-let runs=[], receipts=[], shipments=[], batches=[], auditLogs=[];
+let runs=[], receipts=[], shipments=[], batches=[], auditLogs=[], warehouseAudits=[];
 let inventory={flour_lbs:0,oil_cases:0,beta_count:0};
-let histFilter='all', shipFilter='all', warehouseView='all', auditFilter='all';
+let histFilter='all', shipFilter='all', warehouseView='all', auditFilter='all', batchHistFilter='all', shipHistFilter='all';
 let itemCount=0, editItemCount=0, shipItemCount=0, siloCount=0;
 let dbConnected=false;
 let storedPIN=localStorage.getItem('ato_pin')||'1234';
@@ -948,6 +1083,8 @@ const GROUP_C=['Trigo #8','Baja 06311 Trigo #10'];
 const g=id=>document.getElementById(id);
 const gv=id=>{const el=g(id);return el?(parseFloat(el.value)||0):0;};
 const gt=id=>{const el=g(id);return el?el.value.trim():'';};
+const egt=id=>{const el=document.getElementById(id);return el?el.value.trim():"";};
+const egv=id=>{const el=document.getElementById(id);return el?(parseFloat(el.value)||0):0;};
 function showLoading(msg){g('loading-text').textContent=msg||'Saving…';g('loading-overlay').classList.remove('hidden');}
 function hideLoading(){g('loading-overlay').classList.add('hidden');}
 function showToast(msg,warn){
@@ -1004,8 +1141,8 @@ function showTab(id){
   g('panel-'+id).classList.add('active');
   g('tab-'+id).classList.add('active');
   if(id==='settings')updateDbStatusBox();
-  if(id==='warehouse')renderWarehouse();
-  if(id==='history')renderHistory();
+  if(id==='warehouse'){renderWarehouse();renderWarehouseAuditLog();populateAuditProductDropdown();}
+  if(id==='history'){renderHistory();renderBatchHistTable();renderShipHistTable();}
   if(id==='batch')renderBatchHistory();
   if(id==='ship')renderShipHistory();
 }
@@ -1529,12 +1666,24 @@ function updateIngredientGroup(){
 
   let html='';
   // All groups have Flour (multi-silo), Water, Oil + Beta
-  html+=`
-  <div class="ing-row">
-    <div class="ing-row-header"><span class="ing-name">${group==='C'?t('ingWWFlour'):t('ingFlour')}</span><span class="ing-unit-badge group-badge ${group}">${group==='C'?t('ingWWFlour').replace('🌾 ',''):t('ingFlour').replace('🌾 ','')}</span></div>
-    <div id="silo-entries"></div>
-    <button class="btn-add-silo" onclick="addSiloEntry()">${t('addAnotherSilo')}</button>
-  </div>
+  if(group==='C'){
+    html+=`
+    <div class="ing-row">
+      <div class="ing-row-header"><span class="ing-name">${t('ingWWFlour')}</span><span class="ing-unit-badge group-badge C">50 lbs Bags</span></div>
+      <div class="form-row-3">
+        <div class="form-group"><label>${t('labelNumBags')||'# of 50 lb Bags'}</label><input type="number" inputmode="numeric" id="ww-bags" placeholder="0" oninput="updateSummary()"></div>
+        <div class="form-group"><label>${t('labelLot')}</label><input type="text" id="ww-lot" placeholder="LOT-XXXX"></div>
+        <div class="form-group"><label>${t('labelQtyLbs')}</label><input type="number" inputmode="decimal" id="ww-lbs" placeholder="0" oninput="updateSummary()"></div>
+      </div>
+    </div>`;
+  } else {
+    html+=`
+    <div class="ing-row">
+      <div class="ing-row-header"><span class="ing-name">${t('ingFlour')}</span><span class="ing-unit-badge group-badge ${group}">Silo</span></div>
+      <div id="silo-entries"></div>
+      <button class="btn-add-silo" onclick="addSiloEntry()">${t('addAnotherSilo')}</button>
+    </div>`;
+  }
   <div class="ing-row">
     <div class="ing-row-header"><span class="ing-name">${t('ingWater')}</span><span class="ing-unit-badge">${t('labelLbs')}</span></div>
     <div class="form-group"><label>${t('labelQtyLbs')}</label><input type="number" inputmode="decimal" id="ing-water" placeholder="0"></div>
@@ -1557,14 +1706,10 @@ function updateIngredientGroup(){
   if(group==='A'){
     desc.innerHTML=`<span class="group-badge A">Group A</span> ${t('groupADesc')}`;
     html+=`
-    <div class="ing-row">
+    <div class="ing-row" id="batch-repeater-container">
       <div class="ing-row-header"><span class="ing-name">${t('ingFormulaBatch')}</span><span class="ing-unit-badge" style="background:#1a3a2a;color:var(--green);border-color:var(--green);">${t('unitFromBatching')}</span></div>
-      <div class="form-row-2">
-        <div class="form-group"><label>${t('labelCasesUsed')}</label><input type="number" inputmode="numeric" id="ing-batch-cases" placeholder="0"></div>
-        <div class="form-group"><label>${t('labelBatchDate')}</label>
-          <select id="ing-batch-select"><option value="">${t('loadingBatches')}</option></select>
-        </div>
-      </div>
+      <div id="batch-entries"></div>
+      <button class="btn-add-silo" onclick="addBatchEntry()" style="margin-top:6px;">+ ${t('addAnotherBatch')||'Add Another Batch'}</button>
     </div>`;
   }
 
@@ -1615,7 +1760,7 @@ function updateIngredientGroup(){
 
   container.innerHTML=html;
   siloCount=0;
-  addSiloEntry(); // start with one silo entry
+  if(group!=='C') addSiloEntry(); // start with one silo entry (Group C uses bags instead)
 
   if(group==='A') loadBatchDropdown();
 }
@@ -1649,9 +1794,19 @@ function addSiloEntry(){
 }
 
 function collectSilos(){
+  const group=gt('run-group');
+  // Group C uses bags input instead of silos
+  if(group==='C'){
+    const bags=gv('ww-bags');
+    const lbs=gv('ww-lbs');
+    const lot=gt('ww-lot');
+    const totalFlour=lbs||(bags*50);
+    const entries=bags>0||lbs>0?[{silo:'Bags',bags,lbs:totalFlour,lot}]:[];
+    return{entries,totalFlour};
+  }
   const entries=[];
   let totalFlour=0;
-  document.querySelectorAll('.silo-entry').forEach(el=>{
+  document.querySelectorAll('.silo-entry[id^="silo-entry-"]').forEach(el=>{
     const id=el.id.replace('silo-entry-','');
     const silo=gt('silo-'+id);
     const lbs=gv('silo-lbs-'+id);
@@ -1662,15 +1817,51 @@ function collectSilos(){
 }
 
 // ============================================================
-// BATCH DROPDOWN (for Group A runs)
+// BATCH REPEATER (for Group A runs)
 // ============================================================
-function loadBatchDropdown(){
-  const sel=g('ing-batch-select');
-  if(!sel)return;
+let batchEntryCount=0;
+function buildBatchOptions(){
   const available=batches.filter(b=>b.batch_type==='chemical'&&(b.remaining_cases||b.total_cases)>0);
-  if(!available.length){sel.innerHTML=`<option value="">${t('noBatchesAvail')}</option>`;return;}
-  sel.innerHTML=`<option value="">${t('selectBatch')}</option>`+
+  if(!available.length) return `<option value="">${t('noBatchesAvail')}</option>`;
+  return `<option value="">${t('selectBatch')}</option>`+
     available.map(b=>`<option value="${b.id}">${b.date} — ${b.remaining_cases||b.total_cases} ${t('casesRemaining')}</option>`).join('');
+}
+function addBatchEntry(){
+  batchEntryCount++;
+  const container=g('batch-entries');
+  if(!container)return;
+  const div=document.createElement('div');
+  div.className='silo-entry';div.id='batch-entry-'+batchEntryCount;
+  div.innerHTML=`
+    <div class="silo-entry-header">
+      ${t('ingFormulaBatch')||'Formula Batch'} ${batchEntryCount}
+      ${batchEntryCount>1?`<button onclick="g('batch-entry-${batchEntryCount}').remove()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;">✕</button>`:''}
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>${t('selectBatch')||'Select Batch'}</label>
+        <select id="batch-sel-${batchEntryCount}">${buildBatchOptions()}</select>
+      </div>
+      <div class="form-group"><label>${t('labelCasesUsed')}</label>
+        <input type="number" inputmode="numeric" id="batch-cases-${batchEntryCount}" placeholder="0">
+      </div>
+    </div>`;
+  container.appendChild(div);
+}
+function loadBatchDropdown(){
+  // Initialize first batch entry when group A selected
+  batchEntryCount=0;
+  const container=g('batch-entries');
+  if(container){container.innerHTML='';addBatchEntry();}
+}
+function collectBatches(){
+  const entries=[];
+  document.querySelectorAll('.silo-entry[id^="batch-entry-"]').forEach(el=>{
+    const id=el.id.replace('batch-entry-','');
+    const batchId=g('batch-sel-'+id)?.value||'';
+    const cases=parseFloat(g('batch-cases-'+id)?.value)||0;
+    if(batchId&&cases>0) entries.push({batch_id:batchId,cases});
+  });
+  return entries;
 }
 
 // ============================================================
@@ -1725,9 +1916,8 @@ async function saveRun(){
     water:gv('ing-water'),
     oil:gv('ing-oil'),lot_oil:gt('lot-oil'),
     beta:gv('ing-beta'),lot_beta:gt('lot-beta'),
-    // Group A
-    batch_id:group==='A'?gt('ing-batch-select'):null,
-    batch_cases:group==='A'?gv('ing-batch-cases'):0,
+    // Group A — multi-batch (serialized as JSON)
+    batches_json:group==='A'?JSON.stringify(collectBatches()):'[]',
     // Group B & C
     gordita:['B','C'].includes(group)?gv('ing-gordita'):0,
     lot_gordita:['B','C'].includes(group)?gt('lot-gordita'):'',
@@ -1869,7 +2059,7 @@ function updateShipDates(selectEl,num){
   const stockMap=buildStockMap();
   const dates=Object.keys(stockMap).filter(k=>k.startsWith(product+'||')).sort();
   if(!dates.length){dateSel.innerHTML=`<option value="">${t('noStockProduct')}</option>`;return;}
-  dateSel.innerHTML=`<option value="">${t('labelBatchDate')}</option>`+
+  dateSel.innerHTML=`<option value="">— Select date —</option>`+
     dates.map(k=>{
       const[,date]=k.split('||');
       const avail=stockMap[k];
@@ -1962,7 +2152,10 @@ function renderShipHistory(){
     <td>${s.recipient||'—'}</td>
     <td>${(s.items||[]).map(i=>`<span class="item-tag">${i.product}: ${i.cases} (${i.production_date})</span>`).join('')}</td>
     <td>${s.totalCases||s.total_cases}</td>
-    <td><button class="btn-del-row" onclick="deleteShipment(${s.id})" title="Delete">🗑</button></td>
+    <td><div style="display:flex;gap:5px;">
+      <button class="btn-edit-row" onclick="openEditShip(${s.id})">✏️</button>
+      <button class="btn-del-row" onclick="deleteShipment(${s.id})" title="Delete">🗑</button>
+    </div></td>
   </tr>`).join('');
 }
 
@@ -1988,7 +2181,7 @@ async function deleteShipment(id){
 function setWarehouseView(v,btn){warehouseView=v;document.querySelectorAll('#panel-warehouse .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderWarehouse();}
 
 function renderWarehouse(){
-  const stockMap=buildStockMap();
+  const stockMap=buildStockMapWithAudits();
   const el=g('warehouse-grid');
 
   if(!Object.keys(stockMap).length){
@@ -2025,7 +2218,7 @@ function renderWarehouse(){
 }
 
 function exportWarehouse(){
-  const stockMap=buildStockMap();
+  const stockMap=buildStockMapWithAudits();
   const rows=Object.keys(stockMap).sort().map(k=>{
     const[product,date]=k.split('||');
     return{[t('whColProduct')]:product,[t('whColDate')]:date,[t('whColAvail')]:stockMap[k]};
@@ -2102,6 +2295,8 @@ function refreshDashboard(){
     <tr style="background:var(--surface2);"><td style="font-weight:800;">Total</td><td style="color:var(--accent);font-weight:900;">${wc}</td><td>—</td></tr>
   </tbody></table></div>`;
 
+  // Discrepancy banner
+  refreshDiscrepancyBanner();
   // Recent runs
   const rel=g('recent-runs-list');
   if(!runs.length){rel.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">${t('noRunsYet')}</div></div>`;return;}
@@ -2376,6 +2571,17 @@ function checkAuditPin(){
 function lockAuditLog(){auditUnlocked=false;auditPinBuf='';updateAuditDots(0,false);g('audit-gate').style.display='';g('audit-content').style.display='none';const tab=g('tab-audit');if(tab)tab.style.display='none';showTab('dash');}
 function revealAuditTab(){const tab=g('tab-audit');if(tab){tab.style.display='';showTab('audit');}}
 
+function buildDiff(oldObj,newObj){
+  const changes=[];
+  Object.keys(newObj).forEach(k=>{
+    const ov=oldObj[k],nv=newObj[k];
+    if(String(ov)!==String(nv)&&nv!==undefined){
+      changes.push(`${k}: "${ov||'—'}" → "${nv||'—'}"`);
+    }
+  });
+  return changes.length?changes.slice(0,5).join(' | '):'(no changes)';
+}
+
 async function writeAudit(entry){
   try{await SB.insert('audit_log',entry);auditLogs.unshift(entry);}
   catch(err){console.warn('Audit write failed:',err.message);}
@@ -2436,6 +2642,379 @@ function updateDbStatusBox(){
 }
 
 // ============================================================
+// HISTORY — BATCH & SHIP TABLE RENDERS
+// ============================================================
+function setBatchHistFilter(f,btn){batchHistFilter=f;document.querySelectorAll('#batch-hist-filter-bar .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderBatchHistTable();}
+function setShipHistFilter(f,btn){shipHistFilter=f;document.querySelectorAll('#ship-hist-filter-bar .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderShipHistTable();}
+
+function renderBatchHistTable(){
+  const f=filterByDate(batches,batchHistFilter);
+  const body=g('batch-hist-body');
+  if(!body)return;
+  if(!f.length){body.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🧪</div><div class="empty-text">${t('noBatches')}</div></div></td></tr>`;return;}
+  body.innerHTML=f.map(b=>{
+    const isC=(b.batch_type==='chemical');
+    const qty=isC?`${b.total_cases} cases`:`${b.bags_made} bags`;
+    const ings=isC
+      ?[b.calcium_bags&&`Calcium ${b.calcium_bags}bg`,b.sodium_bags&&`Sodium ${b.sodium_bags}bg`,b.baking_bags&&`Baking ${b.baking_bags}bg`,b.salt_bags&&`Salt ${b.salt_bags}bg`].filter(Boolean).join(', ')
+      :[b.fumaric_bags&&`Fumaric ${b.fumaric_bags}bg`,b.guar_bags&&`Guar ${b.guar_bags}bg`,b.enzyme_bags&&`Enzyme ${b.enzyme_bags}bg`].filter(Boolean).join(', ');
+    return`<tr>
+      <td>${b.date}</td>
+      <td><span class="item-tag ${isC?'accent':''}">${isC?'Chemical':'FGE'}</span></td>
+      <td style="color:var(--accent);font-weight:800;">${qty}</td>
+      <td style="font-size:12px;">${ings||'—'}</td>
+      <td style="font-size:12px;color:var(--text3);">${b.notes||'—'}</td>
+      <td><button class="btn-edit-row" onclick="openEditBatch(${b.id})">✏️</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderShipHistTable(){
+  const f=filterByDate(shipments,shipHistFilter);
+  const body=g('ship-hist-body');
+  if(!body)return;
+  if(!f.length){body.innerHTML=`<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🚚</div><div class="empty-text">${t('noShipments')}</div></div></td></tr>`;return;}
+  body.innerHTML=f.map(s=>`<tr>
+    <td>${s.date}</td>
+    <td>${s.recipient||'—'}</td>
+    <td>${(s.items||[]).map(i=>`<span class="item-tag">${i.product}: ${i.cases} (${i.production_date})</span>`).join('')}</td>
+    <td>${s.totalCases||s.total_cases||0}</td>
+    <td><div style="display:flex;gap:5px;">
+      <button class="btn-edit-row" onclick="openEditShip(${s.id})">✏️</button>
+      <button class="btn-del-row" onclick="deleteShipment(${s.id})">🗑</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+// ============================================================
+// EDIT BATCH MODAL
+// ============================================================
+function openEditBatch(id){
+  const b=batches.find(x=>x.id===id);if(!b)return;
+  g('edit-batch-id').value=id;
+  g('edit-batch-type').value=b.batch_type;
+  g('edit-batch-date').value=b.date||'';
+  g('edit-batch-notes').value=b.notes||'';
+  g('edit-batch-changed-by').value='';
+  const qtyWrap=g('edit-batch-qty-wrap');
+  const ingsEl=g('edit-batch-ings');
+  if(b.batch_type==='chemical'){
+    qtyWrap.innerHTML=`<div class="form-group"><label>Total Cases Created</label><input type="number" inputmode="numeric" id="ebi-cases" value="${b.total_cases||0}"></div>`;
+    ingsEl.innerHTML=`
+      <div class="form-row-2">
+        <div class="form-group"><label>Calcium Propionate Bags</label><input type="number" inputmode="decimal" id="ebi-calcium-bags" value="${b.calcium_bags||0}"></div>
+        <div class="form-group"><label>Lot #</label><input type="text" id="ebi-calcium-lot" value="${b.calcium_lot||''}"></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label>Sodium Propionate Bags</label><input type="number" inputmode="decimal" id="ebi-sodium-bags" value="${b.sodium_bags||0}"></div>
+        <div class="form-group"><label>Lot #</label><input type="text" id="ebi-sodium-lot" value="${b.sodium_lot||''}"></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label>Baking Powder Bags</label><input type="number" inputmode="decimal" id="ebi-baking-bags" value="${b.baking_bags||0}"></div>
+        <div class="form-group"><label>Lot #</label><input type="text" id="ebi-baking-lot" value="${b.baking_lot||''}"></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label>Salt Bags</label><input type="number" inputmode="decimal" id="ebi-salt-bags" value="${b.salt_bags||0}"></div>
+        <div class="form-group"><label>Lot #</label><input type="text" id="ebi-salt-lot" value="${b.salt_lot||''}"></div>
+      </div>`;
+  } else {
+    qtyWrap.innerHTML=`<div class="form-group"><label>Bags Made</label><input type="number" inputmode="numeric" id="ebi-bags-made" value="${b.bags_made||0}"></div>`;
+    ingsEl.innerHTML=`
+      <div class="form-row-2">
+        <div class="form-group"><label>Fumaric Acid Bags</label><input type="number" inputmode="decimal" id="ebi-fumaric-bags" value="${b.fumaric_bags||0}"></div>
+        <div class="form-group"><label>Lot #</label><input type="text" id="ebi-fumaric-lot" value="${b.fumaric_lot||''}"></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label>Guar Gum Bags</label><input type="number" inputmode="decimal" id="ebi-guar-bags" value="${b.guar_bags||0}"></div>
+        <div class="form-group"><label>Lot #</label><input type="text" id="ebi-guar-lot" value="${b.guar_lot||''}"></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label>Enzyme Blend Bags</label><input type="number" inputmode="decimal" id="ebi-enzyme-bags" value="${b.enzyme_bags||0}"></div>
+        <div class="form-group"><label>Lot #</label><input type="text" id="ebi-enzyme-lot" value="${b.enzyme_lot||''}"></div>
+      </div>`;
+  }
+  g('edit-batch-modal').classList.remove('hidden');document.body.style.overflow='hidden';
+}
+function closeEditBatch(){g('edit-batch-modal').classList.add('hidden');document.body.style.overflow='';}
+
+async function saveEditBatch(){
+  const id=parseInt(g('edit-batch-id').value);
+  const btype=g('edit-batch-type').value;
+  const changedBy=egt('edit-batch-changed-by');
+  const date=egt('edit-batch-date');
+  if(!date){showToast(t('editErrDate'),true);return;}
+  if(!changedBy){showToast(t('editErrName'),true);return;}
+  const old=batches.find(x=>x.id===id)||{};
+  let updated={date,notes:egt('edit-batch-notes')};
+  if(btype==='chemical'){
+    const cases=egv('ebi-cases');
+    Object.assign(updated,{total_cases:cases,remaining_cases:cases,
+      calcium_bags:egv('ebi-calcium-bags'),calcium_lot:egt('ebi-calcium-lot'),
+      sodium_bags:egv('ebi-sodium-bags'),sodium_lot:egt('ebi-sodium-lot'),
+      baking_bags:egv('ebi-baking-bags'),baking_lot:egt('ebi-baking-lot'),
+      salt_bags:egv('ebi-salt-bags'),salt_lot:egt('ebi-salt-lot')});
+  } else {
+    Object.assign(updated,{bags_made:egv('ebi-bags-made'),
+      fumaric_bags:egv('ebi-fumaric-bags'),fumaric_lot:egt('ebi-fumaric-lot'),
+      guar_bags:egv('ebi-guar-bags'),guar_lot:egt('ebi-guar-lot'),
+      enzyme_bags:egv('ebi-enzyme-bags'),enzyme_lot:egt('ebi-enzyme-lot')});
+  }
+  showLoading('Saving…');
+  try{
+    await SB.update('formula_batches',id,updated);
+    await writeAudit({action:'EDITED',record_type:'Formula Batch',record_date:old.date||date,changed_by:changedBy,diff:buildDiff(old,updated),changed_at:new Date().toISOString()});
+    const idx=batches.findIndex(x=>x.id===id);
+    if(idx!==-1)batches[idx]={...batches[idx],...updated};
+    closeEditBatch();renderBatchHistory();renderBatchHistTable();
+    showToast('✓ Batch updated!');
+  }catch(err){showToast('⚠ '+err.message,true);}
+  finally{hideLoading();}
+}
+
+async function confirmDeleteBatch(){
+  const id=parseInt(g('edit-batch-id').value);
+  const changedBy=egt('edit-batch-changed-by');
+  if(!changedBy){showToast(t('editErrNameDel'),true);return;}
+  const b=batches.find(x=>x.id===id);
+  if(!confirm(`Delete this batch (${b?.date||'?'})?\n${t('cannotUndo')}`))return;
+  showLoading('Deleting…');
+  try{
+    await SB.delete('formula_batches',id);
+    await writeAudit({action:'DELETED',record_type:'Formula Batch',record_date:b?.date||'—',changed_by:changedBy,diff:`Deleted ${b?.batch_type==='chemical'?'Chemical':'FGE'} batch: ${b?.date||'?'}`,changed_at:new Date().toISOString()});
+    batches=batches.filter(x=>x.id!==id);
+    closeEditBatch();renderBatchHistory();renderBatchHistTable();
+    showToast('✓ Batch deleted');
+  }catch(err){showToast('⚠ '+err.message,true);}
+  finally{hideLoading();}
+}
+
+// ============================================================
+// EDIT SHIPMENT MODAL
+// ============================================================
+function openEditShip(id){
+  const s=shipments.find(x=>x.id===id);if(!s)return;
+  g('edit-ship-id').value=id;
+  g('edit-ship-date').value=s.date||'';
+  g('edit-ship-recipient').value=s.recipient||'';
+  g('edit-ship-po').value=s.po||'';
+  g('edit-ship-notes').value=s.notes||'';
+  g('edit-ship-changed-by').value='';
+  const itemsEl=g('edit-ship-items');
+  itemsEl.innerHTML=(s.items||[]).map((item,i)=>`
+    <div class="ing-row" style="margin-bottom:10px;">
+      <div style="font-size:13px;font-weight:800;color:var(--accent);margin-bottom:8px;">Item ${i+1}</div>
+      <div class="form-row-3">
+        <div class="form-group"><label>Product</label><input type="text" id="esi-product-${i}" value="${item.product||''}"></div>
+        <div class="form-group"><label>Production Date</label><input type="date" id="esi-date-${i}" value="${item.production_date||''}"></div>
+        <div class="form-group"><label>Cases</label><input type="number" inputmode="numeric" id="esi-cases-${i}" value="${item.cases||0}"></div>
+      </div>
+    </div>`).join('');
+  g('edit-ship-modal').classList.remove('hidden');document.body.style.overflow='hidden';
+}
+function closeEditShip(){g('edit-ship-modal').classList.add('hidden');document.body.style.overflow='';}
+
+async function saveEditShip(){
+  const id=parseInt(g('edit-ship-id').value);
+  const changedBy=egt('edit-ship-changed-by');
+  const date=egt('edit-ship-date');
+  if(!date){showToast(t('editErrDate'),true);return;}
+  if(!changedBy){showToast(t('editErrName'),true);return;}
+  const old=shipments.find(x=>x.id===id)||{};
+  // Collect updated items
+  const items=[];let totalCases=0;
+  const itemEls=g('edit-ship-items').querySelectorAll('.ing-row');
+  itemEls.forEach((el,i)=>{
+    const product=document.getElementById('esi-product-'+i)?.value||'';
+    const production_date=document.getElementById('esi-date-'+i)?.value||'';
+    const cases=parseFloat(document.getElementById('esi-cases-'+i)?.value)||0;
+    if(product&&production_date&&cases>0){items.push({product,production_date,cases});totalCases+=cases;}
+  });
+  const updated={date,recipient:egt('edit-ship-recipient'),po:egt('edit-ship-po'),notes:egt('edit-ship-notes'),items_json:JSON.stringify(items),total_cases:totalCases};
+  showLoading('Saving…');
+  try{
+    await SB.update('shipments',id,updated);
+    await writeAudit({action:'EDITED',record_type:'Shipment',record_date:old.date||date,changed_by:changedBy,diff:buildDiff({date:old.date,recipient:old.recipient,total_cases:old.total_cases},{date:updated.date,recipient:updated.recipient,total_cases:updated.total_cases})+' | Items updated',changed_at:new Date().toISOString()});
+    const idx=shipments.findIndex(x=>x.id===id);
+    if(idx!==-1)shipments[idx]={...shipments[idx],...updated,items,totalCases};
+    closeEditShip();renderShipHistory();renderShipHistTable();renderWarehouse();refreshDashboard();
+    showToast('✓ Shipment updated!');
+  }catch(err){showToast('⚠ '+err.message,true);}
+  finally{hideLoading();}
+}
+
+async function confirmDeleteShipFromModal(){
+  const id=parseInt(g('edit-ship-id').value);
+  const changedBy=egt('edit-ship-changed-by');
+  if(!changedBy){showToast(t('editErrNameDel'),true);return;}
+  const s=shipments.find(x=>x.id===id);
+  if(!confirm(`Delete shipment to ${s?.recipient||'?'} (${s?.date||'?'})?\n${t('cannotUndo')}`))return;
+  showLoading('Deleting…');
+  try{
+    await SB.delete('shipments',id);
+    await writeAudit({action:'DELETED',record_type:'Shipment',record_date:s?.date||'—',changed_by:changedBy,diff:`Deleted shipment to ${s?.recipient||'—'}, ${s?.total_cases||0} cases`,changed_at:new Date().toISOString()});
+    shipments=shipments.filter(x=>x.id!==id);
+    closeEditShip();renderShipHistory();renderShipHistTable();renderWarehouse();refreshDashboard();
+    showToast(t('shipDeleted'));
+  }catch(err){showToast('⚠ '+err.message,true);}
+  finally{hideLoading();}
+}
+
+// ============================================================
+// WAREHOUSE AUDIT
+// ============================================================
+function populateAuditProductDropdown(){
+  const sel=g('audit-product');
+  if(!sel)return;
+  const stockMap=buildStockMap();
+  const products=[...new Set(Object.keys(stockMap).map(k=>k.split('||')[0]))].sort();
+  // Also include all products that have ever been produced (even if stock=0)
+  const allProduced=[...new Set(runs.flatMap(r=>(r.items||[]).map(i=>i.name)))].sort();
+  const combined=[...new Set([...products,...allProduced])].sort();
+  sel.innerHTML='<option value="">— Select Product —</option>'+combined.map(p=>`<option value="${p}">${p}</option>`).join('');
+  g('audit-prod-date').innerHTML='<option value="">— Select product first —</option>';
+  g('audit-system-balance').style.display='none';
+  g('audit-diff-display').style.display='none';
+  g('audit-reason-group').style.display='none';
+}
+
+function loadAuditDates(){
+  const product=g('audit-product')?.value||'';
+  const dateSel=g('audit-prod-date');
+  const balanceBox=g('audit-system-balance');
+  if(!product){dateSel.innerHTML='<option value="">— Select product first —</option>';balanceBox.style.display='none';return;}
+  // Get all production dates for this product (not just positive stock)
+  const prodDates=[...new Set(runs.filter(r=>(r.items||[]).some(i=>i.name===product)).map(r=>r.date))].sort().reverse();
+  if(!prodDates.length){dateSel.innerHTML='<option value="">— No production runs found —</option>';return;}
+  dateSel.innerHTML='<option value="">— Select date —</option>'+prodDates.map(d=>{
+    const stockMap=buildStockMap();
+    const avail=stockMap[`${product}||${d}`]||0;
+    return`<option value="${d}">${d} — ${avail} cases available</option>`;
+  }).join('');
+}
+
+function showAuditSystemBalance(){
+  const product=g('audit-product')?.value||'';
+  const date=g('audit-prod-date')?.value||'';
+  const balanceBox=g('audit-system-balance');
+  if(!product||!date){balanceBox.style.display='none';return;}
+  const stockMap=buildStockMap();
+  const sysQty=stockMap[`${product}||${date}`]||0;
+  g('audit-system-qty').textContent=sysQty;
+  balanceBox.style.display='block';
+  showAuditDiff();
+}
+
+function showAuditDiff(){
+  const product=g('audit-product')?.value||'';
+  const date=g('audit-prod-date')?.value||'';
+  const physical=parseFloat(g('audit-physical-count')?.value)||0;
+  const diffEl=g('audit-diff-display');
+  const reasonGroup=g('audit-reason-group');
+  if(!product||!date){diffEl.style.display='none';reasonGroup.style.display='none';return;}
+  const stockMap=buildStockMap();
+  const sysQty=stockMap[`${product}||${date}`]||0;
+  const diff=physical-sysQty;
+  if(physical===0&&!g('audit-physical-count')?.value){diffEl.style.display='none';reasonGroup.style.display='none';return;}
+  diffEl.style.display='block';
+  if(diff===0){
+    diffEl.style.background='#1a3a2a';diffEl.style.color='var(--green)';
+    diffEl.textContent=`✅ No discrepancy — System (${sysQty}) matches physical count (${physical})`;
+    reasonGroup.style.display='none';
+  } else {
+    diffEl.style.background='#3a1a1a';diffEl.style.color='var(--red)';
+    diffEl.textContent=`⚠️ Discrepancy: System shows ${sysQty} cases, physical count is ${physical} cases (${diff>0?'+':''}${diff})`;
+    reasonGroup.style.display='block';
+  }
+}
+
+async function saveWarehouseAudit(){
+  const product=g('audit-product')?.value||'';
+  const date=g('audit-prod-date')?.value||'';
+  const physical=parseFloat(g('audit-physical-count')?.value);
+  const auditedBy=gt('audit-by');
+  if(!product||!date){showToast('⚠ Select a product and date',true);return;}
+  if(isNaN(physical)){showToast('⚠ Enter actual physical count',true);return;}
+  if(!auditedBy){showToast('⚠ Enter audited by name',true);return;}
+  const stockMap=buildStockMap();
+  const sysQty=stockMap[`${product}||${date}`]||0;
+  const diff=physical-sysQty;
+  const reason=gt('audit-reason');
+  if(diff!==0&&!reason){showToast('⚠ Provide a reason for the discrepancy',true);return;}
+  const auditEntry={
+    product,production_date:date,system_qty:sysQty,physical_qty:physical,
+    discrepancy:diff,reason:reason||'No discrepancy',audited_by:auditedBy,
+    audited_at:new Date().toISOString()
+  };
+  showLoading('Saving audit…');
+  try{
+    const saved=await SB.insert('warehouse_audits',auditEntry);
+    warehouseAudits.unshift({...auditEntry,id:saved[0]?.id||Date.now()});
+    // Write to audit log too
+    await writeAudit({action:'WAREHOUSE_AUDIT',record_type:'Warehouse Audit',record_date:date,changed_by:auditedBy,diff:`${product} ${date}: System ${sysQty} → Physical ${physical} (Δ${diff>0?'+':''}${diff}). Reason: ${reason||'none'}`,changed_at:new Date().toISOString()});
+    // Reset form
+    g('audit-product').value='';g('audit-prod-date').innerHTML='<option value="">— Select product first —</option>';
+    g('audit-physical-count').value='';g('audit-by').value='';g('audit-reason').value='';
+    g('audit-system-balance').style.display='none';
+    g('audit-diff-display').style.display='none';g('audit-reason-group').style.display='none';
+    renderWarehouseAuditLog();renderWarehouse();refreshDashboard();
+    showToast(diff===0?'✅ Audit logged — no discrepancy':'⚠️ Discrepancy logged & inventory adjusted');
+  }catch(err){showToast('⚠ '+err.message,true);}
+  finally{hideLoading();}
+}
+
+function renderWarehouseAuditLog(){
+  const el=g('warehouse-audit-log');if(!el)return;
+  if(!warehouseAudits.length){el.innerHTML='<div class="empty-state" style="padding:20px;"><div class="empty-icon">🔎</div><div class="empty-text">No audits yet</div></div>';return;}
+  el.innerHTML=warehouseAudits.slice(0,20).map(a=>{
+    const hasDisc=a.discrepancy!==0;
+    const diffStr=a.discrepancy>0?`+${a.discrepancy}`:String(a.discrepancy);
+    return`<div class="warehouse-item" style="border-color:${hasDisc?'var(--red)':'var(--green)'};">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <span class="warehouse-product" style="font-size:15px;">${a.product}</span>
+        <span class="item-tag ${hasDisc?'red':'green'}">${hasDisc?`Δ${diffStr} cases`:'✓ Match'}</span>
+      </div>
+      <div style="font-size:13px;color:var(--text2);">📅 ${a.production_date} · System: ${a.system_qty} · Physical: ${a.physical_qty}</div>
+      ${hasDisc?`<div style="font-size:12px;color:var(--red);margin-top:4px;">Reason: ${a.reason}</div>`:''}
+      <div style="font-size:11px;color:var(--text3);margin-top:4px;">By ${a.audited_by} · ${a.audited_at?new Date(a.audited_at).toLocaleString():'—'}</div>
+    </div>`;
+  }).join('');
+}
+
+// Updated buildStockMap: applies warehouse audit adjustments
+function buildStockMapWithAudits(){
+  // Start with base stock
+  const base=buildStockMap();
+  // Apply the most recent audit for each product+date
+  const applied={};
+  warehouseAudits.slice().reverse().forEach(a=>{
+    const key=`${a.product}||${a.production_date}`;
+    if(!applied[key]&&a.discrepancy!==0){
+      // Override: set to physical_qty regardless of what math says
+      // We do this by injecting a synthetic "shipped" correction
+      applied[key]=true;
+      // If physical < system, treat difference as "adjusted shipped"
+      // If physical > system, treat as negative shipment (return)
+      // Simplest: just override the map value
+      base[key]=Math.max(0,a.physical_qty);
+    }
+  });
+  return base;
+}
+
+function refreshDiscrepancyBanner(){
+  const banner=g('dash-discrepancy-banner');
+  const list=g('dash-discrepancy-list');
+  if(!banner||!list)return;
+  const recent=warehouseAudits.filter(a=>a.discrepancy!==0).slice(0,5);
+  if(!recent.length){banner.style.display='none';return;}
+  banner.style.display='block';
+  list.innerHTML=recent.map(a=>{
+    const diff=a.discrepancy>0?`+${a.discrepancy}`:String(a.discrepancy);
+    return`<span style="display:block;">• ${a.product} (${a.production_date}): System ${a.system_qty} → Physical ${a.physical_qty} <strong style="color:var(--red);">(Δ${diff})</strong> — ${a.reason}</span>`;
+  }).join('');
+}
+
+// ============================================================
 // INIT
 // ============================================================
 async function init(){
@@ -2449,11 +3028,12 @@ async function init(){
   setSyncIndicator('syncing',t('syncConnecting'));
   showLoading(t('loadingDB'));
   try{
-    [runs,receipts,shipments,batches]=await Promise.all([
+    [runs,receipts,shipments,batches,warehouseAudits]=await Promise.all([
       SB.get('production_runs','&limit=500'),
       SB.get('receipts','&limit=500'),
       SB.get('shipments','&limit=500'),
-      SB.get('formula_batches','&limit=500')
+      SB.get('formula_batches','&limit=500'),
+      SB.get('warehouse_audits','&limit=200').catch(()=>[])
     ]);
     // Parse JSON fields
     runs=runs.map(r=>({...r,items:JSON.parse(r.items_json||'[]'),totalCases:r.total_cases||0}));
