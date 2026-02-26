@@ -1684,6 +1684,7 @@ function updateIngredientGroup(){
       <button class="btn-add-silo" onclick="addSiloEntry()">${t('addAnotherSilo')}</button>
     </div>`;
   }
+  html+=`
   <div class="ing-row">
     <div class="ing-row-header"><span class="ing-name">${t('ingWater')}</span><span class="ing-unit-badge">${t('labelLbs')}</span></div>
     <div class="form-group"><label>${t('labelQtyLbs')}</label><input type="number" inputmode="decimal" id="ing-water" placeholder="0"></div>
@@ -2369,8 +2370,7 @@ function addEditItem(name='',cases=''){
   g('edit-items-container').appendChild(div);
 }
 function closeEditRun(){g('edit-run-modal').classList.add('hidden');document.body.style.overflow='';}
-function egv(id){const el=g(id);return el?(parseFloat(el.value)||0):0;}
-function egt(id){const el=g(id);return el?el.value.trim():'';}
+// egv/egt defined above as const
 
 async function saveEditRun(){
   const id=parseInt(g('edit-run-id').value);
