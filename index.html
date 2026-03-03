@@ -512,8 +512,9 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
         <div class="section-label">Sub-Batch 1 — Chemical Batch</div>
         <div class="form-row-2">
           <div class="form-group"><label>Date of Batching</label><input type="date" id="batch1-date"></div>
-          <div class="form-group"><label>Total Cases Created</label><input type="number" inputmode="numeric" id="batch1-cases" placeholder="0"></div>
+          <div class="form-group"><label>Operator Name</label><input type="text" id="batch1-operator" placeholder="Who is performing this batch?"></div>
         </div>
+        <div class="form-group"><label>Total Cases Created</label><input type="number" inputmode="numeric" id="batch1-cases" placeholder="0"></div>
         <div class="ing-row">
           <div class="ing-row-header"><span class="ing-name">Calcium Propionate</span><span class="ing-unit-badge">50lb Bags</span></div>
           <div class="form-row-2">
@@ -546,34 +547,44 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
         <button class="btn btn-green" onclick="saveBatch1()">💾 Save Chemical Batch</button>
 
         <hr class="section-divider" style="margin-top:24px;">
-        <div class="section-label">Sub-Batch 2 — FGE Blend</div>
+        <div class="section-label">Sub-Batch 2 — FGE Batch</div>
         <div class="form-row-2">
           <div class="form-group"><label>Date of Batching</label><input type="date" id="batch2-date"></div>
-          <div class="form-group"><label>Number of Bags Made</label><input type="number" inputmode="numeric" id="batch2-bags-made" placeholder="0"></div>
+          <div class="form-group"><label>Operator Name</label><input type="text" id="batch2-operator" placeholder="Who is performing this batch?"></div>
         </div>
+
         <div class="ing-row">
-          <div class="ing-row-header"><span class="ing-name">Fumaric Acid</span><span class="ing-unit-badge">Bags Used</span></div>
-          <div class="form-row-2">
-            <div class="form-group"><label>Bags Used</label><input type="number" inputmode="decimal" id="b2-fumaric-bags" placeholder="0"></div>
+          <div class="ing-row-header"><span class="ing-name">⚗️ Fumaric Acid</span><span class="ing-unit-badge">Raw → 0.12 oz bags</span></div>
+          <div class="form-row-3">
+            <div class="form-group"><label>Raw Bags Used</label><input type="number" inputmode="decimal" id="b2-fumaric-bags" placeholder="0"></div>
+            <div class="form-group"><label>Small Bags Produced</label><input type="number" inputmode="numeric" id="b2-fumaric-produced" placeholder="0"></div>
             <div class="form-group"><label>Lot #</label><input type="text" id="b2-fumaric-lot" placeholder="LOT-XXXX"></div>
           </div>
         </div>
         <div class="ing-row">
-          <div class="ing-row-header"><span class="ing-name">Guar Gum</span><span class="ing-unit-badge">Bags Used</span></div>
-          <div class="form-row-2">
-            <div class="form-group"><label>Bags Used</label><input type="number" inputmode="decimal" id="b2-guar-bags" placeholder="0"></div>
+          <div class="ing-row-header"><span class="ing-name">🌿 Guar Gum</span><span class="ing-unit-badge">Raw → 0.5 oz bags</span></div>
+          <div class="form-row-3">
+            <div class="form-group"><label>Raw Bags Used</label><input type="number" inputmode="decimal" id="b2-guar-bags" placeholder="0"></div>
+            <div class="form-group"><label>Small Bags Produced</label><input type="number" inputmode="numeric" id="b2-guar-produced" placeholder="0"></div>
             <div class="form-group"><label>Lot #</label><input type="text" id="b2-guar-lot" placeholder="LOT-XXXX"></div>
           </div>
         </div>
         <div class="ing-row">
-          <div class="ing-row-header"><span class="ing-name">Enzyme Blend</span><span class="ing-unit-badge">Bags Used</span></div>
-          <div class="form-row-2">
-            <div class="form-group"><label>Bags Used</label><input type="number" inputmode="decimal" id="b2-enzyme-bags" placeholder="0"></div>
+          <div class="ing-row-header"><span class="ing-name">🧬 Enzyme Blend</span><span class="ing-unit-badge">Raw → 0.3 oz bags</span></div>
+          <div class="form-row-3">
+            <div class="form-group"><label>Raw Bags Used</label><input type="number" inputmode="decimal" id="b2-enzyme-bags" placeholder="0"></div>
+            <div class="form-group"><label>Small Bags Produced</label><input type="number" inputmode="numeric" id="b2-enzyme-produced" placeholder="0"></div>
             <div class="form-group"><label>Lot #</label><input type="text" id="b2-enzyme-lot" placeholder="LOT-XXXX"></div>
           </div>
         </div>
+
+        <div class="summary-box" style="margin-bottom:14px;">
+          <div class="summary-title">FGE Batch — Available Small Bags Inventory</div>
+          <div id="fge-inventory-summary" style="font-size:13px;color:var(--text2);line-height:1.8;">Save FGE Batches to see inventory here.</div>
+        </div>
+
         <div class="form-group"><label>Notes</label><input type="text" id="batch2-notes" placeholder="—"></div>
-        <button class="btn btn-green" onclick="saveBatch2()">💾 Save FGE Blend Batch</button>
+        <button class="btn btn-green" onclick="saveBatch2()">💾 Save FGE Batch</button>
       </div>
 
       <div class="card">
@@ -823,7 +834,7 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
         </div>
         <div class="log-wrapper">
           <table class="log-table"><thead><tr>
-            <th>Date</th><th>Type</th><th>Qty</th><th>Key Ingredients</th><th>Notes</th><th></th>
+            <th>Date</th><th>Type</th><th>Qty</th><th>Key Ingredients</th><th>Operator</th><th>Notes</th><th></th>
           </tr></thead><tbody id="batch-hist-body"></tbody></table>
         </div>
       </div>
@@ -1392,7 +1403,7 @@ function showTab(id){
   if(id==='settings')updateDbStatusBox();
   if(id==='warehouse'){renderWarehouse();renderWarehouseAuditLog();populateAuditProductDropdown();}
   if(id==='history'){renderHistory();renderBatchHistTable();renderShipHistTable();}
-  if(id==='batch')renderBatchHistory();
+  if(id==='batch'){renderBatchHistory();renderFGEInventory();}
   if(id==='ship')renderShipHistory();
   if(id==='usage')renderUsage();
 }
@@ -1446,12 +1457,33 @@ function updateIngredientGroup(){
   </div>`;
 
   if(group==='A'){
-    desc.innerHTML=`<span class="group-badge A">Group A</span> Burrito #2, #3, #3.5, #4, #6 — uses Formula Batch`;
+    desc.innerHTML=`<span class="group-badge A">Group A</span> Burrito #2, #3, #3.5, #4, #6 — uses Formula Batch + FGE Batch`;
     html+=`
     <div class="ing-row" id="batch-repeater-container">
       <div class="ing-row-header"><span class="ing-name">🧪 Formula Batch</span><span class="ing-unit-badge" style="background:#1a3a2a;color:var(--green);border-color:var(--green);">From Batching</span></div>
       <div id="batch-entries"></div>
       <button class="btn-add-silo" onclick="addBatchEntry()" style="margin-top:6px;">+ Add Another Batch</button>
+    </div>
+    <div class="ing-row">
+      <div class="ing-row-header"><span class="ing-name">⚗️ Fumaric Acid (from FGE Batch)</span><span class="ing-unit-badge" style="background:#2a1a3a;color:var(--purple);border-color:var(--purple);">0.12 oz bags</span></div>
+      <div class="form-row-2">
+        <div class="form-group"><label>Source</label><select id="ing-fge-fumaric-src" onchange="updateFGEQty('fumaric')">${buildFGEOptions('fumaric')}</select></div>
+        <div class="form-group"><label>Bags Used</label><input type="number" inputmode="numeric" id="ing-fge-fumaric" placeholder="0"></div>
+      </div>
+    </div>
+    <div class="ing-row">
+      <div class="ing-row-header"><span class="ing-name">🌿 Guar Gum (from FGE Batch)</span><span class="ing-unit-badge" style="background:#2a1a3a;color:var(--purple);border-color:var(--purple);">0.5 oz bags</span></div>
+      <div class="form-row-2">
+        <div class="form-group"><label>Source</label><select id="ing-fge-guar-src" onchange="updateFGEQty('guar')">${buildFGEOptions('guar')}</select></div>
+        <div class="form-group"><label>Bags Used</label><input type="number" inputmode="numeric" id="ing-fge-guar" placeholder="0"></div>
+      </div>
+    </div>
+    <div class="ing-row">
+      <div class="ing-row-header"><span class="ing-name">🧬 Enzyme Blend (from FGE Batch)</span><span class="ing-unit-badge" style="background:#2a1a3a;color:var(--purple);border-color:var(--purple);">0.3 oz bags</span></div>
+      <div class="form-row-2">
+        <div class="form-group"><label>Source</label><select id="ing-fge-enzyme-src" onchange="updateFGEQty('enzyme')">${buildFGEOptions('enzyme')}</select></div>
+        <div class="form-group"><label>Bags Used</label><input type="number" inputmode="numeric" id="ing-fge-enzyme" placeholder="0"></div>
+      </div>
     </div>`;
   }
   if(group==='B'){
@@ -1571,6 +1603,25 @@ function collectBatches(){
   return entries;
 }
 
+// FGE Batch integration — dropdown helper
+function updateFGEQty(type){
+  const src=g('ing-fge-'+type+'-src');
+  const qtyEl=g('ing-fge-'+type);
+  if(!src||!qtyEl)return;
+  // Enable/disable qty input based on source selection
+  qtyEl.disabled=!src.value;
+  if(!src.value)qtyEl.value='';
+}
+function collectFGEUsage(){
+  const usage={fumaric:0,guar:0,enzyme:0};
+  ['fumaric','guar','enzyme'].forEach(t=>{
+    const src=g('ing-fge-'+t+'-src');
+    const qty=g('ing-fge-'+t);
+    if(src&&src.value&&qty)usage[t]=parseFloat(qty.value)||0;
+  });
+  return usage;
+}
+
 // ============================================================
 // ITEMS PRODUCED
 // ============================================================
@@ -1607,7 +1658,8 @@ async function saveRun(){
     const name=entry.querySelector('.item-select')?.value||'',cases=parseFloat(entry.querySelector('.item-cases')?.value)||0;
     if(name&&cases>0){items.push({name,cases});totalCases+=cases;}
   });
-  const run={date,shift:gt('run-shift'),operator:gt('run-operator'),product_group:group,flour:totalFlour,silos_json:JSON.stringify(siloEntries),water:gv('ing-water'),oil:gv('ing-oil'),lot_oil:gt('lot-oil'),beta:gv('ing-beta'),lot_beta:gt('lot-beta'),batches_json:group==='A'?JSON.stringify(collectBatches()):'[]',gordita:['B','C'].includes(group)?gv('ing-gordita'):0,lot_gordita:['B','C'].includes(group)?gt('lot-gordita'):'',fumaric:['B','C'].includes(group)?gv('ing-fumaric'):0,lot_fumaric:['B','C'].includes(group)?gt('lot-fumaric'):'',sodiump:group==='B'?gv('ing-sodiump'):0,lot_sodiump:group==='B'?gt('lot-sodiump'):'',items_json:JSON.stringify(items),total_cases:totalCases,ratio:totalCases>0?(totalFlour/totalCases).toFixed(2):'0',notes:gt('run-notes')};
+  const fgeUsage=group==='A'?collectFGEUsage():{fumaric:0,guar:0,enzyme:0};
+  const run={date,shift:gt('run-shift'),operator:gt('run-operator'),product_group:group,flour:totalFlour,silos_json:JSON.stringify(siloEntries),water:gv('ing-water'),oil:gv('ing-oil'),lot_oil:gt('lot-oil'),beta:gv('ing-beta'),lot_beta:gt('lot-beta'),batches_json:group==='A'?JSON.stringify(collectBatches()):'[]',gordita:['B','C'].includes(group)?gv('ing-gordita'):0,lot_gordita:['B','C'].includes(group)?gt('lot-gordita'):'',fumaric:['B','C'].includes(group)?gv('ing-fumaric'):0,lot_fumaric:['B','C'].includes(group)?gt('lot-fumaric'):'',sodiump:group==='B'?gv('ing-sodiump'):0,lot_sodiump:group==='B'?gt('lot-sodiump'):'',fge_fumaric:fgeUsage.fumaric,fge_guar:fgeUsage.guar,fge_enzyme:fgeUsage.enzyme,items_json:JSON.stringify(items),total_cases:totalCases,ratio:totalCases>0?(totalFlour/totalCases).toFixed(2):'0',notes:gt('run-notes')};
   showLoading('Saving…');
   try{
     const saved=await safeInsert('production_runs',run);
@@ -1632,30 +1684,41 @@ function clearRun(){
 // FORMULA BATCHING
 // ============================================================
 async function saveBatch1(){
-  const date=gt('batch1-date'),cases=gv('batch1-cases');
+  const date=gt('batch1-date'),cases=gv('batch1-cases'),operator=gt('batch1-operator');
   if(!date||cases===0){showToast('⚠ Date and cases required',true);return;}
-  const batch={date,batch_type:'chemical',total_cases:cases,remaining_cases:cases,calcium_bags:gv('b1-calcium-bags'),calcium_lot:gt('b1-calcium-lot'),sodium_bags:gv('b1-sodium-bags'),sodium_lot:gt('b1-sodium-lot'),baking_bags:gv('b1-baking-bags'),baking_lot:gt('b1-baking-lot'),salt_bags:gv('b1-salt-bags'),salt_lot:gt('b1-salt-lot'),notes:gt('batch1-notes')};
+  if(!operator){showToast('⚠ Operator name required',true);return;}
+  const batch={date,batch_type:'chemical',operator,total_cases:cases,remaining_cases:cases,calcium_bags:gv('b1-calcium-bags'),calcium_lot:gt('b1-calcium-lot'),sodium_bags:gv('b1-sodium-bags'),sodium_lot:gt('b1-sodium-lot'),baking_bags:gv('b1-baking-bags'),baking_lot:gt('b1-baking-lot'),salt_bags:gv('b1-salt-bags'),salt_lot:gt('b1-salt-lot'),notes:gt('batch1-notes')};
   showLoading('Saving…');
   try{
     const saved=await safeInsert('formula_batches',batch);
     batches.unshift({...batch,id:saved[0]?.id||Date.now()});
-    ['batch1-date','batch1-cases','b1-calcium-bags','b1-calcium-lot','b1-sodium-bags','b1-sodium-lot','b1-baking-bags','b1-baking-lot','b1-salt-bags','b1-salt-lot','batch1-notes'].forEach(id=>{const el=g(id);if(el)el.value='';});
+    ['batch1-date','batch1-cases','batch1-operator','b1-calcium-bags','b1-calcium-lot','b1-sodium-bags','b1-sodium-lot','b1-baking-bags','b1-baking-lot','b1-salt-bags','b1-salt-lot','batch1-notes'].forEach(id=>{const el=g(id);if(el)el.value='';});
     g('batch1-date').value=new Date().toISOString().split('T')[0];
     renderBatchHistory();showToast('✓ Chemical batch saved!');
   }catch(err){showToast('⚠ '+err.message,true);}finally{hideLoading();}
 }
 
 async function saveBatch2(){
-  const date=gt('batch2-date'),bagsMade=gv('batch2-bags-made');
-  if(!date||bagsMade===0){showToast('⚠ Date and bags made required',true);return;}
-  const batch={date,batch_type:'fge',bags_made:bagsMade,fumaric_bags:gv('b2-fumaric-bags'),fumaric_lot:gt('b2-fumaric-lot'),guar_bags:gv('b2-guar-bags'),guar_lot:gt('b2-guar-lot'),enzyme_bags:gv('b2-enzyme-bags'),enzyme_lot:gt('b2-enzyme-lot'),notes:gt('batch2-notes')};
+  const date=gt('batch2-date'),operator=gt('batch2-operator');
+  const fumaricBags=gv('b2-fumaric-bags'),fumaricProduced=gv('b2-fumaric-produced');
+  const guarBags=gv('b2-guar-bags'),guarProduced=gv('b2-guar-produced');
+  const enzymeBags=gv('b2-enzyme-bags'),enzymeProduced=gv('b2-enzyme-produced');
+  if(!date){showToast('⚠ Date required',true);return;}
+  if(!operator){showToast('⚠ Operator name required',true);return;}
+  if(fumaricBags===0&&guarBags===0&&enzymeBags===0){showToast('⚠ Enter at least one ingredient',true);return;}
+  const totalBagsMade=fumaricProduced+guarProduced+enzymeProduced;
+  const batch={date,batch_type:'fge',operator,bags_made:totalBagsMade,
+    fumaric_bags:fumaricBags,fumaric_produced:fumaricProduced,fumaric_lot:gt('b2-fumaric-lot'),
+    guar_bags:guarBags,guar_produced:guarProduced,guar_lot:gt('b2-guar-lot'),
+    enzyme_bags:enzymeBags,enzyme_produced:enzymeProduced,enzyme_lot:gt('b2-enzyme-lot'),
+    notes:gt('batch2-notes')};
   showLoading('Saving…');
   try{
     const saved=await safeInsert('formula_batches',batch);
     batches.unshift({...batch,id:saved[0]?.id||Date.now()});
-    ['batch2-date','batch2-bags-made','b2-fumaric-bags','b2-fumaric-lot','b2-guar-bags','b2-guar-lot','b2-enzyme-bags','b2-enzyme-lot','batch2-notes'].forEach(id=>{const el=g(id);if(el)el.value='';});
+    ['batch2-date','batch2-operator','b2-fumaric-bags','b2-fumaric-produced','b2-fumaric-lot','b2-guar-bags','b2-guar-produced','b2-guar-lot','b2-enzyme-bags','b2-enzyme-produced','b2-enzyme-lot','batch2-notes'].forEach(id=>{const el=g(id);if(el)el.value='';});
     g('batch2-date').value=new Date().toISOString().split('T')[0];
-    renderBatchHistory();showToast('✓ FGE batch saved!');
+    renderBatchHistory();renderFGEInventory();showToast('✓ FGE Batch saved!');
   }catch(err){showToast('⚠ '+err.message,true);}finally{hideLoading();}
 }
 
@@ -1664,11 +1727,47 @@ function renderBatchHistory(){
   if(!batches.length){el.innerHTML=`<div class="empty-state" style="padding:20px;"><div class="empty-icon">🧪</div><div class="empty-text">No batches yet</div></div>`;return;}
   el.innerHTML=batches.slice(0,10).map(b=>{
     const isC=b.batch_type==='chemical';
-    return`<div class="warehouse-item"><div class="warehouse-product">${isC?'🧪 Chemical Batch':'🌿 FGE Blend'} — ${b.date}</div>
-      <div style="font-size:13px;color:var(--text2);">${isC?`${b.total_cases} cases created · ${b.remaining_cases||b.total_cases} remaining`:`${b.bags_made} bags made`}</div>
-      ${b.notes?`<div style="font-size:12px;color:var(--text3);margin-top:4px;">${b.notes}</div>`:''}
+    let detail='';
+    if(isC){detail=`${b.total_cases} cases created · ${b.remaining_cases||b.total_cases} remaining`;}
+    else{
+      const parts=[];
+      if(b.fumaric_produced)parts.push(`Fumaric: ${b.fumaric_produced} × 0.12oz`);
+      if(b.guar_produced)parts.push(`Guar: ${b.guar_produced} × 0.5oz`);
+      if(b.enzyme_produced)parts.push(`Enzyme: ${b.enzyme_produced} × 0.3oz`);
+      detail=parts.length?parts.join(' · '):`${b.bags_made||0} bags made`;
+    }
+    return`<div class="warehouse-item"><div class="warehouse-product">${isC?'🧪 Chemical Batch':'🌿 FGE Batch'} — ${b.date}</div>
+      <div style="font-size:13px;color:var(--text2);">${detail}</div>
+      ${b.operator?`<div style="font-size:12px;color:var(--blue);margin-top:3px;">👤 ${b.operator}</div>`:''}
+      ${b.notes?`<div style="font-size:12px;color:var(--text3);margin-top:3px;">${b.notes}</div>`:''}
     </div>`;
   }).join('');
+  renderFGEInventory();
+}
+
+// FGE Batch inventory — total small bags produced (available for use in Chemical Batch / Log Run)
+function getFGEInventory(){
+  const fge=batches.filter(b=>b.batch_type==='fge');
+  let fumaric=0,guar=0,enzyme=0;
+  fge.forEach(b=>{fumaric+=(b.fumaric_produced||0);guar+=(b.guar_produced||0);enzyme+=(b.enzyme_produced||0);});
+  return{fumaric,guar,enzyme};
+}
+function renderFGEInventory(){
+  const el=g('fge-inventory-summary');if(!el)return;
+  const inv=getFGEInventory();
+  if(inv.fumaric===0&&inv.guar===0&&inv.enzyme===0){el.innerHTML='No FGE Batches recorded yet.';return;}
+  el.innerHTML=`<div style="display:flex;gap:20px;flex-wrap:wrap;">
+    <div><strong>⚗️ Fumaric (0.12oz):</strong> <span style="color:var(--accent);font-weight:800;">${inv.fumaric}</span> bags</div>
+    <div><strong>🌿 Guar (0.5oz):</strong> <span style="color:var(--accent);font-weight:800;">${inv.guar}</span> bags</div>
+    <div><strong>🧬 Enzyme (0.3oz):</strong> <span style="color:var(--accent);font-weight:800;">${inv.enzyme}</span> bags</div>
+  </div>`;
+}
+
+// Build FGE dropdown options for use in Chemical Batch integration / Log Run
+function buildFGEOptions(type){
+  const inv=getFGEInventory();
+  const avail=inv[type]||0;
+  return avail>0?`<option value="">— Select —</option><option value="fge">${avail} bags available from FGE Batch</option>`:`<option value="">— No FGE ${type} bags available —</option>`;
 }
 
 // ============================================================
@@ -2190,12 +2289,13 @@ function openEditBatch(id){
   const b=batches.find(x=>x.id===id);if(!b)return;
   g('edit-batch-id').value=id;g('edit-batch-type').value=b.batch_type;g('edit-batch-date').value=b.date||'';g('edit-batch-notes').value=b.notes||'';g('edit-batch-changed-by').value='';
   const qtyWrap=g('edit-batch-qty-wrap'),ingsEl=g('edit-batch-ings');
+  const operatorField=`<div class="form-group"><label>Operator</label><input type="text" id="ebi-operator" value="${b.operator||''}"></div>`;
   if(b.batch_type==='chemical'){
-    qtyWrap.innerHTML=`<div class="form-group"><label>Total Cases Created</label><input type="number" inputmode="numeric" id="ebi-cases" value="${b.total_cases||0}"></div>`;
+    qtyWrap.innerHTML=operatorField+`<div class="form-group"><label>Total Cases Created</label><input type="number" inputmode="numeric" id="ebi-cases" value="${b.total_cases||0}"></div>`;
     ingsEl.innerHTML=`<div class="form-row-2"><div class="form-group"><label>Calcium Prop. Bags</label><input type="number" inputmode="decimal" id="ebi-calcium-bags" value="${b.calcium_bags||0}"></div><div class="form-group"><label>Lot #</label><input type="text" id="ebi-calcium-lot" value="${b.calcium_lot||''}"></div></div><div class="form-row-2"><div class="form-group"><label>Sodium Prop. Bags</label><input type="number" inputmode="decimal" id="ebi-sodium-bags" value="${b.sodium_bags||0}"></div><div class="form-group"><label>Lot #</label><input type="text" id="ebi-sodium-lot" value="${b.sodium_lot||''}"></div></div><div class="form-row-2"><div class="form-group"><label>Baking Powder Bags</label><input type="number" inputmode="decimal" id="ebi-baking-bags" value="${b.baking_bags||0}"></div><div class="form-group"><label>Lot #</label><input type="text" id="ebi-baking-lot" value="${b.baking_lot||''}"></div></div><div class="form-row-2"><div class="form-group"><label>Salt Bags</label><input type="number" inputmode="decimal" id="ebi-salt-bags" value="${b.salt_bags||0}"></div><div class="form-group"><label>Lot #</label><input type="text" id="ebi-salt-lot" value="${b.salt_lot||''}"></div></div>`;
   }else{
-    qtyWrap.innerHTML=`<div class="form-group"><label>Bags Made</label><input type="number" inputmode="numeric" id="ebi-bags-made" value="${b.bags_made||0}"></div>`;
-    ingsEl.innerHTML=`<div class="form-row-2"><div class="form-group"><label>Fumaric Acid Bags</label><input type="number" inputmode="decimal" id="ebi-fumaric-bags" value="${b.fumaric_bags||0}"></div><div class="form-group"><label>Lot #</label><input type="text" id="ebi-fumaric-lot" value="${b.fumaric_lot||''}"></div></div><div class="form-row-2"><div class="form-group"><label>Guar Gum Bags</label><input type="number" inputmode="decimal" id="ebi-guar-bags" value="${b.guar_bags||0}"></div><div class="form-group"><label>Lot #</label><input type="text" id="ebi-guar-lot" value="${b.guar_lot||''}"></div></div><div class="form-row-2"><div class="form-group"><label>Enzyme Blend Bags</label><input type="number" inputmode="decimal" id="ebi-enzyme-bags" value="${b.enzyme_bags||0}"></div><div class="form-group"><label>Lot #</label><input type="text" id="ebi-enzyme-lot" value="${b.enzyme_lot||''}"></div></div>`;
+    qtyWrap.innerHTML=operatorField;
+    ingsEl.innerHTML=`<div class="form-row-3"><div class="form-group"><label>Fumaric Raw Bags</label><input type="number" inputmode="decimal" id="ebi-fumaric-bags" value="${b.fumaric_bags||0}"></div><div class="form-group"><label>Fumaric Produced</label><input type="number" inputmode="numeric" id="ebi-fumaric-produced" value="${b.fumaric_produced||0}"></div><div class="form-group"><label>Lot #</label><input type="text" id="ebi-fumaric-lot" value="${b.fumaric_lot||''}"></div></div><div class="form-row-3"><div class="form-group"><label>Guar Raw Bags</label><input type="number" inputmode="decimal" id="ebi-guar-bags" value="${b.guar_bags||0}"></div><div class="form-group"><label>Guar Produced</label><input type="number" inputmode="numeric" id="ebi-guar-produced" value="${b.guar_produced||0}"></div><div class="form-group"><label>Lot #</label><input type="text" id="ebi-guar-lot" value="${b.guar_lot||''}"></div></div><div class="form-row-3"><div class="form-group"><label>Enzyme Raw Bags</label><input type="number" inputmode="decimal" id="ebi-enzyme-bags" value="${b.enzyme_bags||0}"></div><div class="form-group"><label>Enzyme Produced</label><input type="number" inputmode="numeric" id="ebi-enzyme-produced" value="${b.enzyme_produced||0}"></div><div class="form-group"><label>Lot #</label><input type="text" id="ebi-enzyme-lot" value="${b.enzyme_lot||''}"></div></div>`;
   }
   g('edit-batch-modal').classList.remove('hidden');document.body.style.overflow='hidden';
 }
@@ -2205,9 +2305,9 @@ async function saveEditBatch(){
   if(!date){showToast('⚠ Date required',true);return;}
   if(!changedBy){showToast('⚠ Enter your name',true);return;}
   const old=batches.find(x=>x.id===id)||{};
-  let updated={date,notes:egt('edit-batch-notes')};
+  let updated={date,notes:egt('edit-batch-notes'),operator:egt('ebi-operator')};
   if(btype==='chemical'){const cases=egv('ebi-cases');Object.assign(updated,{total_cases:cases,remaining_cases:cases,calcium_bags:egv('ebi-calcium-bags'),calcium_lot:egt('ebi-calcium-lot'),sodium_bags:egv('ebi-sodium-bags'),sodium_lot:egt('ebi-sodium-lot'),baking_bags:egv('ebi-baking-bags'),baking_lot:egt('ebi-baking-lot'),salt_bags:egv('ebi-salt-bags'),salt_lot:egt('ebi-salt-lot')});}
-  else{Object.assign(updated,{bags_made:egv('ebi-bags-made'),fumaric_bags:egv('ebi-fumaric-bags'),fumaric_lot:egt('ebi-fumaric-lot'),guar_bags:egv('ebi-guar-bags'),guar_lot:egt('ebi-guar-lot'),enzyme_bags:egv('ebi-enzyme-bags'),enzyme_lot:egt('ebi-enzyme-lot')});}
+  else{const fp=egv('ebi-fumaric-produced'),gp=egv('ebi-guar-produced'),ep=egv('ebi-enzyme-produced');Object.assign(updated,{bags_made:fp+gp+ep,fumaric_bags:egv('ebi-fumaric-bags'),fumaric_produced:fp,fumaric_lot:egt('ebi-fumaric-lot'),guar_bags:egv('ebi-guar-bags'),guar_produced:gp,guar_lot:egt('ebi-guar-lot'),enzyme_bags:egv('ebi-enzyme-bags'),enzyme_produced:ep,enzyme_lot:egt('ebi-enzyme-lot')});}
   showLoading('Saving…');
   try{
     await SB.update('formula_batches',id,updated);
@@ -2286,12 +2386,13 @@ function setShipHistFilter(f,btn){shipHistFilter=f;document.querySelectorAll('#s
 
 function renderBatchHistTable(){
   const f=filterByDate(batches,batchHistFilter),body=g('batch-hist-body');if(!body)return;
-  if(!f.length){body.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🧪</div><div class="empty-text">No batches</div></div></td></tr>`;return;}
+  if(!f.length){body.innerHTML=`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🧪</div><div class="empty-text">No batches</div></div></td></tr>`;return;}
   body.innerHTML=f.map(b=>{
     const isC=(b.batch_type==='chemical');
-    const qty=isC?`${b.total_cases} cases`:`${b.bags_made} bags`;
-    const ings=isC?[b.calcium_bags&&`Calcium ${b.calcium_bags}bg`,b.sodium_bags&&`Sodium ${b.sodium_bags}bg`,b.baking_bags&&`Baking ${b.baking_bags}bg`,b.salt_bags&&`Salt ${b.salt_bags}bg`].filter(Boolean).join(', '):[b.fumaric_bags&&`Fumaric ${b.fumaric_bags}bg`,b.guar_bags&&`Guar ${b.guar_bags}bg`,b.enzyme_bags&&`Enzyme ${b.enzyme_bags}bg`].filter(Boolean).join(', ');
-    return`<tr><td>${b.date}</td><td><span class="item-tag ${isC?'accent':''}">${isC?'Chemical':'FGE'}</span></td><td style="color:var(--accent);font-weight:800;">${qty}</td><td style="font-size:12px;">${ings||'—'}</td><td style="font-size:12px;color:var(--text3);">${b.notes||'—'}</td>
+    const qty=isC?`${b.total_cases} cases`:
+      [b.fumaric_produced&&`F:${b.fumaric_produced}`,b.guar_produced&&`G:${b.guar_produced}`,b.enzyme_produced&&`E:${b.enzyme_produced}`].filter(Boolean).join(', ')||`${b.bags_made||0} bags`;
+    const ings=isC?[b.calcium_bags&&`Calcium ${b.calcium_bags}bg`,b.sodium_bags&&`Sodium ${b.sodium_bags}bg`,b.baking_bags&&`Baking ${b.baking_bags}bg`,b.salt_bags&&`Salt ${b.salt_bags}bg`].filter(Boolean).join(', '):[b.fumaric_bags&&`Fumaric ${b.fumaric_bags}bg raw`,b.guar_bags&&`Guar ${b.guar_bags}bg raw`,b.enzyme_bags&&`Enzyme ${b.enzyme_bags}bg raw`].filter(Boolean).join(', ');
+    return`<tr><td>${b.date}</td><td><span class="item-tag ${isC?'accent':''}">${isC?'Chemical':'FGE Batch'}</span></td><td style="color:var(--accent);font-weight:800;">${qty}</td><td style="font-size:12px;">${ings||'—'}</td><td style="font-size:12px;color:var(--blue);">${b.operator||'—'}</td><td style="font-size:12px;color:var(--text3);">${b.notes||'—'}</td>
       <td>${currentRole==='admin'?`<button class="btn-edit-row" onclick="openEditBatch(${b.id})">✏️</button>`:''}</td></tr>`;
   }).join('');
 }
@@ -2452,7 +2553,7 @@ function dlExcel(sheets,fname){
 function runsToRows(data){return data.map(r=>({'Date':r.date,'Shift':r.shift||'','Operator':r.operator||'','Group':r.product_group||'','Items':(r.items||[]).map(i=>i.name+': '+i.cases).join(' | '),'Total Cases':r.totalCases||r.total_cases||0,'Flour (lbs)':r.flour||0,'lbs/case':r.ratio||'','Oil (cases)':r.oil||0,'Beta Tablets':r.beta||0,'Notes':r.notes||''}));}
 function shipmentsToRows(data){const rows=[];data.forEach(s=>(s.items||[]).forEach(item=>rows.push({'Date':s.date,'Recipient':s.recipient||'','PO':s.po||'','Product':item.product,'Production Date':item.production_date,'Cases':item.cases,'Notes':s.notes||''})));return rows;}
 function receiptsToRows(data){return data.map(r=>({'Date':r.date,'Supplier':r.supplier||'','PO':r.po||'','Flour (lbs)':r.flour_lbs||0,'Flour Bags':r.flour_bags||0,'Flour Lot':r.flour_lot||'','WW Flour (lbs)':r.ww_lbs||0,'Oil (cases)':r.oil||0,'Beta':r.beta||0,'Gordita':r.gordita||0,'Salt Bags':r.salt||0,'Baking P Bags':r.bakingp||0,'Calcium Bags':r.calcium||0,'Sodium P Bags':r.sodiump||0,'Fumaric Bags':r.fumaric||0,'Enzyme Bags':r.enzyme||0,'Guar Bags':r.guar||0,'Other':r.other||'','Notes':r.notes||''}));}
-function batchesToRows(data){return data.map(b=>b.batch_type==='chemical'?{'Date':b.date,'Type':'Chemical','Cases Created':b.total_cases||0,'Cases Remaining':b.remaining_cases||b.total_cases||0,'Calcium Bags':b.calcium_bags||0,'Sodium Bags':b.sodium_bags||0,'Baking Bags':b.baking_bags||0,'Salt Bags':b.salt_bags||0,'Notes':b.notes||''}:{'Date':b.date,'Type':'FGE Blend','Bags Made':b.bags_made||0,'Fumaric Bags':b.fumaric_bags||0,'Guar Bags':b.guar_bags||0,'Enzyme Bags':b.enzyme_bags||0,'Notes':b.notes||''});}
+function batchesToRows(data){return data.map(b=>b.batch_type==='chemical'?{'Date':b.date,'Type':'Chemical','Operator':b.operator||'','Cases Created':b.total_cases||0,'Cases Remaining':b.remaining_cases||b.total_cases||0,'Calcium Bags':b.calcium_bags||0,'Sodium Bags':b.sodium_bags||0,'Baking Bags':b.baking_bags||0,'Salt Bags':b.salt_bags||0,'Notes':b.notes||''}:{'Date':b.date,'Type':'FGE Batch','Operator':b.operator||'','Fumaric Raw Bags':b.fumaric_bags||0,'Fumaric Produced (0.12oz)':b.fumaric_produced||0,'Guar Raw Bags':b.guar_bags||0,'Guar Produced (0.5oz)':b.guar_produced||0,'Enzyme Raw Bags':b.enzyme_bags||0,'Enzyme Produced (0.3oz)':b.enzyme_produced||0,'Notes':b.notes||''});}
 
 function exportRuns(p){const d=filterByDate(runs,p);if(!d.length){showToast('⚠ No data',true);return;}dlExcel([{name:'Production Runs',data:runsToRows(d)}],'Atotonilco_Runs_'+getLabel(p));}
 function exportShipments(p){const d=filterByDate(shipments,p),rows=shipmentsToRows(d);if(!rows.length){showToast('⚠ No data',true);return;}dlExcel([{name:'Shipments',data:rows}],'Atotonilco_Shipments_'+getLabel(p));}
