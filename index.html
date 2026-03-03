@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Atotonilco — Inventory System v5</title>
+<title>Atotonilco — Inventory System v5.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -315,6 +315,13 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
 
 /* PHASE 2 PLACEHOLDER */
 .phase2-placeholder{background:var(--surface2);border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;color:var(--text3);}
+.stagnant-banner{background:var(--surface);border-left:4px solid var(--accent);border-radius:0 8px 8px 0;padding:12px 16px;margin:0 0 14px;display:none;box-shadow:var(--shadow);}
+.stagnant-banner.show{display:block;}
+.stagnant-banner-title{font-family:var(--font-display);font-size:14px;font-weight:800;color:var(--accent);margin-bottom:6px;}
+.instock-card{background:var(--surface);border:2px solid var(--green);border-radius:var(--radius);padding:16px;margin-bottom:16px;box-shadow:var(--shadow);}
+.instock-title{font-family:var(--font-display);font-size:15px;font-weight:800;color:var(--green);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.instock-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:14px;}
+.instock-row:last-child{border-bottom:none;}
 </style>
 </head>
 <body>
@@ -328,10 +335,12 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
 <!-- PIN LOCK -->
 <div id="lock-screen" class="hidden">
   <div class="lock-logo">ATOTONILCO</div>
-  <div class="lock-sub" id="lock-subtitle">Inventory System v5</div>
+  <div class="lock-sub" id="lock-subtitle">Inventory System v5.1</div>
   <div class="lock-role-toggle">
     <button class="lock-role-btn active" onclick="setLoginRole('admin')" id="btn-role-admin">👑 Admin</button>
-    <button class="lock-role-btn" onclick="setLoginRole('operator')" id="btn-role-op">🔧 Operator</button>
+    <button class="lock-role-btn" onclick="setLoginRole('opA')" id="btn-role-opA">🔧 Op A</button>
+    <button class="lock-role-btn" onclick="setLoginRole('opB')" id="btn-role-opB">🧪 Op B</button>
+    <button class="lock-role-btn" onclick="setLoginRole('opC')" id="btn-role-opC">🚚 Op C</button>
   </div>
   <div class="lock-icon" id="lock-icon">🔒</div>
   <div class="pin-dots">
@@ -355,7 +364,7 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
   <header class="app-header">
     <div>
       <div class="app-title">ATOTONILCO</div>
-      <div class="app-subtitle">Inventory System v5</div>
+      <div class="app-subtitle">Inventory System v5.1</div>
     </div>
     <div class="header-right">
       <span class="role-badge" id="role-display">Admin</span>
@@ -376,14 +385,14 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
   </div>
 
   <nav class="tab-bar">
-    <button class="tab-item active" onclick="showTab('dash')" id="tab-dash"><span class="tab-icon">📊</span><span data-i18n="tabDash">Dashboard</span></button>
-    <button class="tab-item" onclick="showTab('log')" id="tab-log"><span class="tab-icon">📋</span><span data-i18n="tabLog">Log Run</span></button>
-    <button class="tab-item" onclick="showTab('batch')" id="tab-batch"><span class="tab-icon">🧪</span><span data-i18n="tabBatch">Batching</span></button>
-    <button class="tab-item" onclick="showTab('ship')" id="tab-ship"><span class="tab-icon">🚚</span><span data-i18n="tabShip">Ship</span></button>
-    <button class="tab-item" onclick="showTab('warehouse')" id="tab-warehouse"><span class="tab-icon">🏭</span><span data-i18n="tabWarehouse">Warehouse</span></button>
-    <button class="tab-item" onclick="showTab('receive')" id="tab-receive"><span class="tab-icon">📦</span><span data-i18n="tabReceive">Receive</span></button>
-    <button class="tab-item" onclick="showTab('usage')" id="tab-usage"><span class="tab-icon">📈</span><span data-i18n="tabUsage">Usage</span></button>
-    <button class="tab-item" onclick="showTab('history')" id="tab-history"><span class="tab-icon">🕘</span><span data-i18n="tabHistory">History</span></button>
+    <button class="tab-item active role-tab" data-role-tab="dash" onclick="showTab('dash')" id="tab-dash"><span class="tab-icon">📊</span><span data-i18n="tabDash">Dashboard</span></button>
+    <button class="tab-item role-tab" data-role-tab="log" onclick="showTab('log')" id="tab-log"><span class="tab-icon">📋</span><span data-i18n="tabLog">Log Run</span></button>
+    <button class="tab-item role-tab" data-role-tab="batch" onclick="showTab('batch')" id="tab-batch"><span class="tab-icon">🧪</span><span data-i18n="tabBatch">Batching</span></button>
+    <button class="tab-item role-tab" data-role-tab="ship" onclick="showTab('ship')" id="tab-ship"><span class="tab-icon">🚚</span><span data-i18n="tabShip">Ship</span></button>
+    <button class="tab-item role-tab" data-role-tab="warehouse" onclick="showTab('warehouse')" id="tab-warehouse"><span class="tab-icon">🏭</span><span data-i18n="tabWarehouse">Warehouse</span></button>
+    <button class="tab-item role-tab" data-role-tab="receive" onclick="showTab('receive')" id="tab-receive"><span class="tab-icon">📦</span><span data-i18n="tabReceive">Receive</span></button>
+    <button class="tab-item role-tab" data-role-tab="usage" onclick="showTab('usage')" id="tab-usage"><span class="tab-icon">📈</span><span data-i18n="tabUsage">Usage</span></button>
+    <button class="tab-item role-tab" data-role-tab="history" onclick="showTab('history')" id="tab-history"><span class="tab-icon">🕘</span><span data-i18n="tabHistory">History</span></button>
     <button class="tab-item admin-only" onclick="showTab('export')" id="tab-export"><span class="tab-icon">📤</span><span data-i18n="tabExport">Export</span></button>
     <button class="tab-item admin-only" onclick="showTab('settings')" id="tab-settings"><span class="tab-icon">⚙️</span><span data-i18n="tabSettings">Settings</span></button>
     <button class="tab-item admin-only" onclick="showTab('audit')" id="tab-audit" style="display:none;"><span class="tab-icon">🔍</span><span data-i18n="tabAudit">Audit</span></button>
@@ -405,6 +414,18 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
         <div class="stat-card"><div class="stat-value" id="stat-runs">—</div><div class="stat-label" data-i18n="statRunsWeek">Runs This Week</div></div>
         <div class="stat-card"><div class="stat-value" id="stat-flour-used">—</div><div class="stat-label" data-i18n="statFlourUsed">Flour Used (lbs)</div></div>
         <div class="stat-card"><div class="stat-value" id="stat-flour-ratio">—</div><div class="stat-label" data-i18n="statAvgRatio">Avg lbs/Case</div></div>
+      </div>
+
+      <!-- In-Stock Summary (Received − Shipped/Used) -->
+      <div class="instock-card">
+        <div class="instock-title">📦 <span data-i18n="dashInStock">Current In-Stock — Raw Ingredients</span></div>
+        <div id="instock-summary"></div>
+      </div>
+
+      <!-- Stagnant Stock Alert -->
+      <div class="stagnant-banner" id="stagnant-stock-banner">
+        <div class="stagnant-banner-title" data-i18n="stagnantTitle">⏰ Stagnant Stock — Finished Products >30 Days Without Shipping</div>
+        <div id="stagnant-stock-list"></div>
       </div>
 
       <!-- ALL-TIME cases chart -->
@@ -908,8 +929,16 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
           <button class="btn btn-secondary" style="width:auto;padding:10px 18px;margin:0;font-size:14px;" onclick="startChangePIN('admin')">Change</button>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--border);">
-          <div><div style="font-size:17px;font-weight:700;">Change Operator PIN</div><div style="font-size:13px;color:var(--text3);">Log runs, receive, ship — no delete/edit/export</div></div>
-          <button class="btn btn-secondary" style="width:auto;padding:10px 18px;margin:0;font-size:14px;" onclick="startChangePIN('operator')">Change</button>
+          <div><div style="font-size:17px;font-weight:700;">Change Operator A PIN</div><div style="font-size:13px;color:var(--text3);">Dashboard, Log Run, Batching, Warehouse, History</div></div>
+          <button class="btn btn-secondary" style="width:auto;padding:10px 18px;margin:0;font-size:14px;" onclick="startChangePIN('opA')">Change</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--border);">
+          <div><div style="font-size:17px;font-weight:700;">Change Operator B PIN</div><div style="font-size:13px;color:var(--text3);">Batching only</div></div>
+          <button class="btn btn-secondary" style="width:auto;padding:10px 18px;margin:0;font-size:14px;" onclick="startChangePIN('opB')">Change</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--border);">
+          <div><div style="font-size:17px;font-weight:700;">Change Operator C PIN</div><div style="font-size:13px;color:var(--text3);">Shipping, Receiving, Warehouse, History</div></div>
+          <button class="btn btn-secondary" style="width:auto;padding:10px 18px;margin:0;font-size:14px;" onclick="startChangePIN('opC')">Change</button>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--border);">
           <div><div style="font-size:17px;font-weight:700;">Theme</div><div style="font-size:13px;color:var(--text3);">Toggle dark / light mode</div></div>
@@ -921,7 +950,7 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
         </div>
         <div style="padding:16px 0;">
           <div style="font-size:17px;font-weight:700;">Version</div>
-          <div style="font-size:13px;color:var(--text3);cursor:default;" id="version-tap" onclick="versionTap()">v5.0 — Mar 2026 · inventory-system · Supabase enabled</div>
+          <div style="font-size:13px;color:var(--text3);cursor:default;" id="version-tap" onclick="versionTap()">v5.1 — Mar 2026 · Phase 1 RBAC + i18n · Supabase enabled</div>
         </div>
       </div>
       <div class="card">
@@ -1122,17 +1151,31 @@ let auditFilter='all',batchHistFilter='all',shipHistFilter='all',usageFilter='we
 let itemCount=0,editItemCount=0,shipItemCount=0,siloCount=0,batchEntryCount=0;
 let dbConnected=false;
 let storedAdminPIN=localStorage.getItem('ato_pin')||'1234';
-let storedOpPIN=localStorage.getItem('ato_op_pin')||'5678';
-let currentRole='admin'; // 'admin' or 'operator'
+let storedOpAPIN=localStorage.getItem('ato_opa_pin')||'5678';
+let storedOpBPIN=localStorage.getItem('ato_opb_pin')||'1111';
+let storedOpCPIN=localStorage.getItem('ato_opc_pin')||'2222';
+let currentRole='admin'; // 'admin','opA','opB','opC'
 let loginRole='admin';
 let pinBuffer='',changingPIN=false,changingPINRole='admin',newPINBuffer='';
 let auditUnlocked=false,auditPinBuf='';
 let _vtaps=0,_vtimer=null;
 let isDark=localStorage.getItem('ato_theme')!=='light';
-// Low stock thresholds (cases in warehouse)
 let stockThresholds=JSON.parse(localStorage.getItem('ato_thresholds')||'{}');
-// Offline queue
 let offlineQueue=JSON.parse(localStorage.getItem('ato_offline_queue')||'[]');
+
+// ROLE PERMISSIONS: which tabs each role can access
+const ROLE_TABS={
+  admin:['dash','log','batch','ship','warehouse','receive','usage','history','export','settings','audit'],
+  opA:['dash','log','batch','warehouse','history'],
+  opB:['batch'],
+  opC:['ship','warehouse','receive','history']
+};
+
+// i18n
+const I18N={
+  en:{tabDash:'Dashboard',tabLog:'Log Run',tabBatch:'Batching',tabShip:'Ship',tabWarehouse:'Warehouse',tabReceive:'Receive',tabUsage:'Usage',tabHistory:'History',tabExport:'Export',tabSettings:'Settings',tabAudit:'Audit',statCasesWeek:'Cases This Week',statRunsWeek:'Runs This Week',statFlourUsed:'Flour Used (lbs)',statAvgRatio:'Avg lbs/Case',dashAllTimeTitle:'All-Time Cases by Product',dashWeekChart:'This Week — Cases by Product',dashRecentRuns:'Recent Runs',logRunTitle:'Log Production Run',dashInStock:'Current In-Stock — Raw Ingredients',stagnantTitle:'⏰ Stagnant Stock — Finished Products >30 Days Without Shipping'},
+  es:{tabDash:'Panel',tabLog:'Registrar',tabBatch:'Mezclado',tabShip:'Enviar',tabWarehouse:'Almacén',tabReceive:'Recibir',tabUsage:'Uso',tabHistory:'Historial',tabExport:'Exportar',tabSettings:'Config',tabAudit:'Auditoría',statCasesWeek:'Cajas Esta Semana',statRunsWeek:'Corridas Esta Semana',statFlourUsed:'Harina Usada (lbs)',statAvgRatio:'Prom lbs/Caja',dashAllTimeTitle:'Cajas Totales por Producto',dashWeekChart:'Esta Semana — Cajas por Producto',dashRecentRuns:'Corridas Recientes',logRunTitle:'Registrar Corrida de Producción',dashInStock:'Inventario Actual — Ingredientes Crudos',stagnantTitle:'⏰ Inventario Estancado — Productos >30 Días Sin Envío'}
+};
 
 const PRODUCTS=['Burrito #1','Burrito #2','Burrito #3','Burrito #3.5','Burrito #4','Burrito #6','Burrito #8','Trigo #8','Baja 06311 Trigo #10','Harina Especial','Harina Regular','Harina 5.5','Authentico 06 (HE)','Authentico 08 (#8)','Baby 4.0','Baby 4.5','Baby 5.0','Tonys','Mi Barrio','Other / Otro'];
 
@@ -1214,29 +1257,35 @@ async function processOfflineQueue(){
 }
 
 // ============================================================
-// USER ROLES
+// USER ROLES (RBAC — Admin, Operator A/B/C)
 // ============================================================
 function setLoginRole(role){
   loginRole=role;
-  g('btn-role-admin').classList.toggle('active',role==='admin');
-  g('btn-role-op').classList.toggle('active',role==='operator');
-  g('lock-icon').textContent=role==='admin'?'👑':'🔧';
-  updateDots(0,false);
-  pinBuffer='';
-  g('pin-error').textContent='';
+  document.querySelectorAll('.lock-role-btn').forEach(b=>b.classList.remove('active'));
+  const map={admin:'btn-role-admin',opA:'btn-role-opA',opB:'btn-role-opB',opC:'btn-role-opC'};
+  if(g(map[role]))g(map[role]).classList.add('active');
+  g('lock-icon').textContent={admin:'👑',opA:'🔧',opB:'🧪',opC:'🚚'}[role]||'🔒';
+  updateDots(0,false);pinBuffer='';g('pin-error').textContent='';
 }
 
 function applyRoleUI(){
   const isAdmin=currentRole==='admin';
+  const labels={admin:'👑 Admin',opA:'🔧 Operator A',opB:'🧪 Operator B',opC:'🚚 Operator C'};
   const badge=g('role-display');
-  if(badge){badge.textContent=isAdmin?'👑 Admin':'🔧 Operator';badge.className='role-badge '+(isAdmin?'admin':'operator');}
-  // Show/hide admin-only tabs and panels
+  if(badge){badge.textContent=labels[currentRole]||currentRole;badge.className='role-badge '+(isAdmin?'admin':'operator');}
+  // Admin-only elements
   document.querySelectorAll('.admin-only').forEach(el=>{
     el.style.display=isAdmin?'':'none';
-    // For tab-items specifically use flex or none
     if(el.classList.contains('tab-item'))el.style.display=isAdmin?'flex':'none';
   });
-  // Operator can't edit/delete history
+  // RBAC tab visibility
+  const allowed=ROLE_TABS[currentRole]||[];
+  document.querySelectorAll('.role-tab').forEach(el=>{
+    const tab=el.getAttribute('data-role-tab');
+    const show=isAdmin||allowed.includes(tab);
+    el.style.display=show?'flex':'none';
+  });
+  // Operator can't edit/delete in history
   document.querySelectorAll('.btn-edit-row,.btn-del-row').forEach(btn=>{
     btn.style.display=isAdmin?'':'none';
   });
@@ -1266,8 +1315,12 @@ function updateDots(count,error,isOp=false){
   }
 }
 function checkPIN(){
-  if(loginRole==='admin'&&pinBuffer===storedAdminPIN){unlockApp('admin');}
-  else if(loginRole==='operator'&&pinBuffer===storedOpPIN){unlockApp('operator');}
+  let matched=false,matchedRole='';
+  if(loginRole==='admin'&&pinBuffer===storedAdminPIN){matched=true;matchedRole='admin';}
+  else if(loginRole==='opA'&&pinBuffer===storedOpAPIN){matched=true;matchedRole='opA';}
+  else if(loginRole==='opB'&&pinBuffer===storedOpBPIN){matched=true;matchedRole='opB';}
+  else if(loginRole==='opC'&&pinBuffer===storedOpCPIN){matched=true;matchedRole='opC';}
+  if(matched){unlockApp(matchedRole);}
   else{
     updateDots(4,true);
     g('pin-error').textContent='Incorrect PIN. Try again.';
@@ -1280,19 +1333,23 @@ function unlockApp(role){
   g('lock-screen').classList.add('hidden');
   g('app-content').style.display='block';
   applyRoleUI();
+  // Navigate to first allowed tab for this role
+  const firstTab=(ROLE_TABS[role]||['dash'])[0];
+  showTab(firstTab);
 }
 function lockApp(){pinBuffer='';changingPIN=false;newPINBuffer='';updateDots(0,false);g('pin-error').textContent='';g('lock-screen').classList.remove('hidden');g('app-content').style.display='none';}
 
 function startChangePIN(role){
   changingPIN='new1';changingPINRole=role;newPINBuffer='';
-  g('pin-hint').textContent=`Enter NEW ${role==='operator'?'Operator':'Admin'} PIN`;
-  g('pin-error').textContent='';updateDots(0,false,role==='operator');
+  const labels={admin:'Admin',opA:'Operator A',opB:'Operator B',opC:'Operator C'};
+  g('pin-hint').textContent=`Enter NEW ${labels[role]||role} PIN`;
+  g('pin-error').textContent='';updateDots(0,false,role!=='admin');
   lockApp();
 }
 function handleChangePIN(d){
   if(newPINBuffer.length>=4)return;
   newPINBuffer+=d;
-  const isOp=changingPINRole==='operator';
+  const isOp=changingPINRole!=='admin';
   updateDots(newPINBuffer.length,false,isOp);
   if(newPINBuffer.length===4){
     if(changingPIN==='new1'){
@@ -1301,14 +1358,17 @@ function handleChangePIN(d){
     }else{
       setTimeout(()=>{
         if(newPINBuffer===window._tmpPIN){
-          if(changingPINRole==='operator'){storedOpPIN=newPINBuffer;localStorage.setItem('ato_op_pin',storedOpPIN);}
-          else{storedAdminPIN=newPINBuffer;localStorage.setItem('ato_pin',storedAdminPIN);}
+          if(changingPINRole==='admin'){storedAdminPIN=newPINBuffer;localStorage.setItem('ato_pin',storedAdminPIN);}
+          else if(changingPINRole==='opA'){storedOpAPIN=newPINBuffer;localStorage.setItem('ato_opa_pin',storedOpAPIN);}
+          else if(changingPINRole==='opB'){storedOpBPIN=newPINBuffer;localStorage.setItem('ato_opb_pin',storedOpBPIN);}
+          else if(changingPINRole==='opC'){storedOpCPIN=newPINBuffer;localStorage.setItem('ato_opc_pin',storedOpCPIN);}
           changingPIN=false;newPINBuffer='';pinBuffer='';
           g('lock-screen').classList.add('hidden');g('app-content').style.display='block';
           showToast('✓ PIN updated');
         }else{
           updateDots(4,true);g('pin-error').textContent='PINs do not match.';
-          setTimeout(()=>{changingPIN='new1';newPINBuffer='';updateDots(0,false,isOp);g('pin-error').textContent='';g('pin-hint').textContent=`Enter NEW ${changingPINRole} PIN`;},1400);
+          const labels={admin:'Admin',opA:'Operator A',opB:'Operator B',opC:'Operator C'};
+          setTimeout(()=>{changingPIN='new1';newPINBuffer='';updateDots(0,false,isOp);g('pin-error').textContent='';g('pin-hint').textContent=`Enter NEW ${labels[changingPINRole]} PIN`;},1400);
         }
       },120);
     }
@@ -1321,6 +1381,9 @@ function versionTap(){_vtaps++;clearTimeout(_vtimer);_vtimer=setTimeout(()=>{_vt
 // TABS
 // ============================================================
 function showTab(id){
+  // RBAC check
+  const allowed=ROLE_TABS[currentRole]||[];
+  if(currentRole!=='admin'&&!allowed.includes(id)){showToast('⚠ Access denied for your role',true);return;}
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-item').forEach(b=>b.classList.remove('active'));
   const panel=g('panel-'+id),tab=g('tab-'+id);
@@ -2439,12 +2502,70 @@ function updateDbStatusBox(){
 }
 
 // ============================================================
-// LANG (stub — full i18n retained but simplified for brevity)
+// LANGUAGE — full i18n toggle
 // ============================================================
 function setLang(lang){
   currentLang=lang;
   g('btn-en').classList.toggle('active',lang==='en');
   g('btn-es').classList.toggle('active',lang==='es');
+  const dict=I18N[lang]||I18N.en;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key=el.getAttribute('data-i18n');
+    if(dict[key])el.textContent=dict[key];
+  });
+}
+
+// ============================================================
+// DASHBOARD — IN-STOCK TOTALS (Received − Shipped/Used)
+// ============================================================
+function renderInStockSummary(){
+  const el=g('instock-summary');if(!el)return;
+  const recv={flour:0,ww:0,oil:0,beta:0,gordita:0,salt:0,bakingp:0,calcium:0,sodiump:0,fumaric:0,enzyme:0,guar:0};
+  receipts.forEach(r=>{recv.flour+=(r.flour_lbs||0);recv.ww+=(r.ww_lbs||0);recv.oil+=(r.oil||0);recv.beta+=(r.beta||0);recv.gordita+=(r.gordita||0);recv.salt+=(r.salt||0);recv.bakingp+=(r.bakingp||0);recv.calcium+=(r.calcium||0);recv.sodiump+=(r.sodiump||0);recv.fumaric+=(r.fumaric||0);recv.enzyme+=(r.enzyme||0);recv.guar+=(r.guar||0);});
+  const used={flour:0,ww:0,oil:0,beta:0,gordita:0,salt:0,bakingp:0,calcium:0,sodiump:0,fumaric:0,enzyme:0,guar:0};
+  runs.forEach(r=>{used.flour+=(r.flour||0);used.oil+=(r.oil||0);used.beta+=(r.beta||0);used.gordita+=(r.gordita||0);used.fumaric+=(r.fumaric||0);used.sodiump+=(r.sodiump||0);if(r.product_group==='C')used.ww+=(r.flour||0);});
+  // Batching deductions for raw ingredients
+  batches.forEach(b=>{
+    if(b.batch_type==='chemical'){used.calcium+=(b.calcium_bags||0);used.sodiump+=(b.sodium_bags||0);used.bakingp+=(b.baking_bags||0);used.salt+=(b.salt_bags||0);}
+    else if(b.batch_type==='fge'){used.fumaric+=(b.fumaric_bags||0);used.guar+=(b.guar_bags||0);used.enzyme+=(b.enzyme_bags||0);}
+  });
+  const items=[
+    {name:'🌾 Flour',k:'flour',unit:'lbs'},{name:'🌾 WW Flour',k:'ww',unit:'lbs'},
+    {name:'🫙 Oil',k:'oil',unit:'cases'},{name:'💊 Beta',k:'beta',unit:'tablets'},
+    {name:'🛍️ Gordita',k:'gordita',unit:'bags'},{name:'🧂 Salt',k:'salt',unit:'bags'},
+    {name:'Baking Powder',k:'bakingp',unit:'bags'},{name:'Calcium Prop.',k:'calcium',unit:'bags'},
+    {name:'Sodium Prop.',k:'sodiump',unit:'bags'},{name:'⚗️ Fumaric',k:'fumaric',unit:'bags'},
+    {name:'Enzyme Blend',k:'enzyme',unit:'bags'},{name:'Guar Gum',k:'guar',unit:'bags'},
+  ];
+  const hasAny=items.some(i=>recv[i.k]>0);
+  if(!hasAny){el.innerHTML='<div style="text-align:center;color:var(--text3);padding:12px;">No receiving data yet</div>';return;}
+  el.innerHTML=items.filter(i=>recv[i.k]>0).map(i=>{
+    const instock=Math.max(0,recv[i.k]-used[i.k]);
+    return`<div class="instock-row"><span style="color:var(--text2);font-weight:600;">${i.name}</span><span style="font-family:var(--font-display);font-size:16px;font-weight:900;color:${instock>0?'var(--green)':'var(--red)'};">${instock.toLocaleString()} ${i.unit}</span></div>`;
+  }).join('');
+}
+
+// ============================================================
+// STAGNANT STOCK ALERT (>30 days in warehouse, no shipment)
+// ============================================================
+function checkStagnantStock(){
+  const stockMap=buildStockMapWithAudits();
+  const now=new Date();const stagnant=[];
+  Object.keys(stockMap).forEach(k=>{
+    if(stockMap[k]<=0)return;
+    const[product,date]=k.split('||');
+    const prodDate=new Date(date);
+    const daysSince=Math.floor((now-prodDate)/(1000*60*60*24));
+    const recentShip=shipments.some(s=>s.items&&s.items.some(i=>i.product===product)&&Math.floor((now-new Date(s.date))/(1000*60*60*24))<=30);
+    if(daysSince>30&&!recentShip)stagnant.push({product,date,cases:stockMap[k],days:daysSince});
+  });
+  const banner=g('stagnant-stock-banner'),list=g('stagnant-stock-list');
+  if(!banner||!list)return;
+  if(!stagnant.length){banner.classList.remove('show');return;}
+  banner.classList.add('show');
+  const byProduct={};
+  stagnant.forEach(s=>{if(!byProduct[s.product])byProduct[s.product]={cases:0,oldestDays:0};byProduct[s.product].cases+=s.cases;byProduct[s.product].oldestDays=Math.max(byProduct[s.product].oldestDays,s.days);});
+  list.innerHTML=Object.entries(byProduct).map(([p,info])=>`<div class="alert-item"><strong>${p}</strong>: ${info.cases} cases, oldest ${info.oldestDays} days</div>`).join('');
 }
 
 // ============================================================
@@ -2481,7 +2602,9 @@ async function init(){
     g('loading-overlay').classList.add('hidden');
     g('lock-screen').classList.remove('hidden');
     refreshDashboard();
+    renderInStockSummary();
     checkLowStockAlerts();
+    checkStagnantStock();
     // Try to process any queued offline items
     if(navigator.onLine&&offlineQueue.length)processOfflineQueue();
   }
