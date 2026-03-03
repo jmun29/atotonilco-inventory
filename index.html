@@ -681,7 +681,30 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
         <div class="card-title">📦 Receive Inventory</div>
         <div class="form-row-2">
           <div class="form-group"><label>Date</label><input type="date" id="recv-date"></div>
-          <div class="form-group"><label>Supplier</label><input type="text" id="recv-supplier" placeholder="—"></div>
+          <div class="form-group"><label>Receiver Name</label><input type="text" id="recv-receiver" placeholder="Who is receiving?"></div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Supplier</label>
+            <select id="recv-supplier" onchange="handleSupplierChange()">
+              <option value="">— Select Supplier —</option>
+              <option value="ADM Milling">ADM Milling</option>
+              <option value="Ardent Mills">Ardent Mills</option>
+              <option value="Bay State Milling">Bay State Milling</option>
+              <option value="Cargill">Cargill</option>
+              <option value="ConAgra Mills">ConAgra Mills</option>
+              <option value="General Mills">General Mills</option>
+              <option value="Grain Craft">Grain Craft</option>
+              <option value="Grupo Industrial Maseca">Grupo Industrial Maseca</option>
+              <option value="King Arthur">King Arthur</option>
+              <option value="Siemer Milling">Siemer Milling</option>
+              <option value="Other">Other (type below)</option>
+            </select>
+          </div>
+          <div class="form-group" id="recv-supplier-other-wrap" style="display:none;">
+            <label>Supplier Name</label>
+            <input type="text" id="recv-supplier-other" placeholder="Enter supplier name">
+          </div>
         </div>
         <div class="form-group"><label>PO / Reference #</label><input type="text" id="recv-po" placeholder="—"></div>
         <hr class="section-divider">
@@ -690,19 +713,65 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
         <div class="ing-row">
           <div class="ing-name" style="margin-bottom:10px;">🌾 Flour</div>
           <div class="form-row-3">
-            <div class="form-group"><label>lbs</label><input type="number" inputmode="decimal" id="recv-flour-lbs" placeholder="0"></div>
-            <div class="form-group"><label>Bags</label><input type="number" inputmode="numeric" id="recv-flour-bags" placeholder="0"></div>
+            <div class="form-group">
+              <label>Bag Size</label>
+              <select id="recv-flour-bagsize" onchange="autoCalcFlour()">
+                <option value="50">50 lb</option>
+                <option value="100">100 lb</option>
+                <option value="55.12">25 kg (55.12 lb)</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Number of Bags</label><input type="number" inputmode="numeric" id="recv-flour-bags" placeholder="0" oninput="autoCalcFlour()"></div>
+            <div class="form-group"><label>Total lbs (auto)</label><input type="number" id="recv-flour-lbs" placeholder="0" readonly style="background:var(--surface2);font-weight:700;"></div>
+          </div>
+          <div class="form-row-3">
+            <div class="form-group">
+              <label>Silo Destination</label>
+              <select id="recv-flour-silo">
+                <option value="">— Select Silo —</option>
+                <option value="Silo 1">Silo 1</option>
+                <option value="Silo 2">Silo 2</option>
+                <option value="Silo 3">Silo 3</option>
+                <option value="Silo 4">Silo 4</option>
+                <option value="Warehouse">Warehouse (bagged)</option>
+              </select>
+            </div>
+            <div class="form-group"><label>CWT (auto)</label><input type="number" id="recv-flour-cwt" placeholder="0" readonly style="background:var(--surface2);font-weight:700;" step="0.01"></div>
             <div class="form-group"><label>Lot #</label><input type="text" id="recv-flour-lot" placeholder="LOT"></div>
           </div>
         </div>
+
         <div class="ing-row">
           <div class="ing-name" style="margin-bottom:10px;">🌾 Whole Wheat Flour</div>
           <div class="form-row-3">
-            <div class="form-group"><label>lbs</label><input type="number" inputmode="decimal" id="recv-ww-lbs" placeholder="0"></div>
-            <div class="form-group"><label>Bags</label><input type="number" inputmode="numeric" id="recv-ww-bags" placeholder="0"></div>
+            <div class="form-group">
+              <label>Bag Size</label>
+              <select id="recv-ww-bagsize" onchange="autoCalcWW()">
+                <option value="50">50 lb</option>
+                <option value="100">100 lb</option>
+                <option value="55.12">25 kg (55.12 lb)</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Number of Bags</label><input type="number" inputmode="numeric" id="recv-ww-bags" placeholder="0" oninput="autoCalcWW()"></div>
+            <div class="form-group"><label>Total lbs (auto)</label><input type="number" id="recv-ww-lbs" placeholder="0" readonly style="background:var(--surface2);font-weight:700;"></div>
+          </div>
+          <div class="form-row-3">
+            <div class="form-group">
+              <label>Silo Destination</label>
+              <select id="recv-ww-silo">
+                <option value="">— Select Silo —</option>
+                <option value="Silo 1">Silo 1</option>
+                <option value="Silo 2">Silo 2</option>
+                <option value="Silo 3">Silo 3</option>
+                <option value="Silo 4">Silo 4</option>
+                <option value="Warehouse">Warehouse (bagged)</option>
+              </select>
+            </div>
+            <div class="form-group"><label>CWT (auto)</label><input type="number" id="recv-ww-cwt" placeholder="0" readonly style="background:var(--surface2);font-weight:700;" step="0.01"></div>
             <div class="form-group"><label>Lot #</label><input type="text" id="recv-ww-lot" placeholder="LOT"></div>
           </div>
         </div>
+
         <div class="ing-row">
           <div class="ing-name" style="margin-bottom:10px;">🫙 Oil (50 lb case)</div>
           <div class="form-row-2">
@@ -1065,13 +1134,41 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
     <input type="hidden" id="edit-receipt-id">
     <div class="form-row-2">
       <div class="form-group"><label>Date</label><input type="date" id="edit-recv-date"></div>
-      <div class="form-group"><label>Supplier</label><input type="text" id="edit-recv-supplier"></div>
+      <div class="form-group"><label>Receiver Name</label><input type="text" id="edit-recv-receiver"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label>Supplier</label>
+        <select id="edit-recv-supplier" onchange="handleEditSupplierChange()">
+          <option value="">— Select Supplier —</option>
+          <option value="ADM Milling">ADM Milling</option>
+          <option value="Ardent Mills">Ardent Mills</option>
+          <option value="Bay State Milling">Bay State Milling</option>
+          <option value="Cargill">Cargill</option>
+          <option value="ConAgra Mills">ConAgra Mills</option>
+          <option value="General Mills">General Mills</option>
+          <option value="Grain Craft">Grain Craft</option>
+          <option value="Grupo Industrial Maseca">Grupo Industrial Maseca</option>
+          <option value="King Arthur">King Arthur</option>
+          <option value="Siemer Milling">Siemer Milling</option>
+          <option value="Other">Other (type below)</option>
+        </select>
+      </div>
+      <div class="form-group" id="edit-recv-supplier-other-wrap" style="display:none;">
+        <label>Supplier Name</label>
+        <input type="text" id="edit-recv-supplier-other">
+      </div>
     </div>
     <div class="form-group"><label>PO #</label><input type="text" id="edit-recv-po"></div>
     <div class="form-row-3">
       <div class="form-group"><label>Flour (lbs)</label><input type="number" inputmode="decimal" id="edit-recv-flour-lbs"></div>
       <div class="form-group"><label>Flour Bags</label><input type="number" inputmode="numeric" id="edit-recv-flour-bags"></div>
       <div class="form-group"><label>Flour Lot</label><input type="text" id="edit-recv-flour-lot"></div>
+    </div>
+    <div class="form-row-3">
+      <div class="form-group"><label>Flour Silo</label><input type="text" id="edit-recv-flour-silo"></div>
+      <div class="form-group"><label>Flour CWT</label><input type="number" inputmode="decimal" id="edit-recv-flour-cwt" step="0.01"></div>
+      <div class="form-group"><label>WW Silo</label><input type="text" id="edit-recv-ww-silo"></div>
     </div>
     <div class="form-row-2">
       <div class="form-group"><label>Oil (cases)</label><input type="number" inputmode="decimal" id="edit-recv-oil"></div>
@@ -1939,16 +2036,49 @@ function exportWarehouse(){
 // ============================================================
 // RECEIVE
 // ============================================================
+// ============================================================
+// RECEIVING — HELPERS
+// ============================================================
+function handleSupplierChange(){
+  const sel=g('recv-supplier');
+  g('recv-supplier-other-wrap').style.display=sel.value==='Other'?'':'none';
+}
+function handleEditSupplierChange(){
+  const sel=g('edit-recv-supplier');
+  g('edit-recv-supplier-other-wrap').style.display=sel.value==='Other'?'':'none';
+}
+function autoCalcFlour(){
+  const bagSize=parseFloat(g('recv-flour-bagsize')?.value)||50;
+  const bags=parseFloat(g('recv-flour-bags')?.value)||0;
+  const totalLbs=bags*bagSize;
+  const lbsEl=g('recv-flour-lbs');if(lbsEl)lbsEl.value=totalLbs>0?Math.round(totalLbs*100)/100:'';
+  const cwtEl=g('recv-flour-cwt');if(cwtEl)cwtEl.value=totalLbs>0?(totalLbs/100).toFixed(2):'';
+}
+function autoCalcWW(){
+  const bagSize=parseFloat(g('recv-ww-bagsize')?.value)||50;
+  const bags=parseFloat(g('recv-ww-bags')?.value)||0;
+  const totalLbs=bags*bagSize;
+  const lbsEl=g('recv-ww-lbs');if(lbsEl)lbsEl.value=totalLbs>0?Math.round(totalLbs*100)/100:'';
+  const cwtEl=g('recv-ww-cwt');if(cwtEl)cwtEl.value=totalLbs>0?(totalLbs/100).toFixed(2):'';
+}
+
 async function saveReceival(){
   const date=gt('recv-date');
   if(!date){showToast('⚠ Enter a date',true);return;}
-  const r={date,supplier:gt('recv-supplier'),po:gt('recv-po'),flour_lbs:gv('recv-flour-lbs'),flour_bags:gv('recv-flour-bags'),flour_lot:gt('recv-flour-lot'),ww_lbs:gv('recv-ww-lbs'),ww_bags:gv('recv-ww-bags'),ww_lot:gt('recv-ww-lot'),oil:gv('recv-oil'),oil_lot:gt('recv-oil-lot'),beta:gv('recv-beta'),beta_lot:gt('recv-beta-lot'),gordita:gv('recv-gordita'),gordita_lot:gt('recv-gordita-lot'),salt:gv('recv-salt'),salt_lot:gt('recv-salt-lot'),bakingp:gv('recv-bakingp'),bakingp_lot:gt('recv-bakingp-lot'),calcium:gv('recv-calcium'),calcium_lot:gt('recv-calcium-lot'),sodiump:gv('recv-sodiump'),sodiump_lot:gt('recv-sodiump-lot'),fumaric:gv('recv-fumaric'),fumaric_lot:gt('recv-fumaric-lot'),enzyme:gv('recv-enzyme'),enzyme_lot:gt('recv-enzyme-lot'),guar:gv('recv-guar'),guar_lot:gt('recv-guar-lot'),other:gt('recv-other'),notes:gt('recv-notes')};
+  const receiver=gt('recv-receiver');
+  if(!receiver){showToast('⚠ Enter receiver name',true);return;}
+  // Supplier: dropdown or "Other" text
+  let supplier=gt('recv-supplier');
+  if(supplier==='Other'){supplier=gt('recv-supplier-other')||'Other';}
+  const r={date,receiver,supplier,po:gt('recv-po'),flour_lbs:gv('recv-flour-lbs'),flour_bags:gv('recv-flour-bags'),flour_lot:gt('recv-flour-lot'),flour_silo:gt('recv-flour-silo'),flour_cwt:gv('recv-flour-cwt'),ww_lbs:gv('recv-ww-lbs'),ww_bags:gv('recv-ww-bags'),ww_lot:gt('recv-ww-lot'),ww_silo:gt('recv-ww-silo'),ww_cwt:gv('recv-ww-cwt'),oil:gv('recv-oil'),oil_lot:gt('recv-oil-lot'),beta:gv('recv-beta'),beta_lot:gt('recv-beta-lot'),gordita:gv('recv-gordita'),gordita_lot:gt('recv-gordita-lot'),salt:gv('recv-salt'),salt_lot:gt('recv-salt-lot'),bakingp:gv('recv-bakingp'),bakingp_lot:gt('recv-bakingp-lot'),calcium:gv('recv-calcium'),calcium_lot:gt('recv-calcium-lot'),sodiump:gv('recv-sodiump'),sodiump_lot:gt('recv-sodiump-lot'),fumaric:gv('recv-fumaric'),fumaric_lot:gt('recv-fumaric-lot'),enzyme:gv('recv-enzyme'),enzyme_lot:gt('recv-enzyme-lot'),guar:gv('recv-guar'),guar_lot:gt('recv-guar-lot'),other:gt('recv-other'),notes:gt('recv-notes')};
   showLoading('Saving…');
   try{
     const saved=await safeInsert('receipts',r);
     receipts.unshift({...r,id:saved[0]?.id||Date.now()});
-    ['recv-date','recv-supplier','recv-po','recv-flour-lbs','recv-flour-bags','recv-flour-lot','recv-ww-lbs','recv-ww-bags','recv-ww-lot','recv-oil','recv-oil-lot','recv-beta','recv-beta-lot','recv-gordita','recv-gordita-lot','recv-salt','recv-salt-lot','recv-bakingp','recv-bakingp-lot','recv-calcium','recv-calcium-lot','recv-sodiump','recv-sodiump-lot','recv-fumaric','recv-fumaric-lot','recv-enzyme','recv-enzyme-lot','recv-guar','recv-guar-lot','recv-other','recv-notes'].forEach(id=>{const el=g(id);if(el)el.value='';});
+    ['recv-date','recv-receiver','recv-supplier','recv-supplier-other','recv-po','recv-flour-lbs','recv-flour-bags','recv-flour-lot','recv-flour-silo','recv-flour-cwt','recv-flour-bagsize','recv-ww-lbs','recv-ww-bags','recv-ww-lot','recv-ww-silo','recv-ww-cwt','recv-ww-bagsize','recv-oil','recv-oil-lot','recv-beta','recv-beta-lot','recv-gordita','recv-gordita-lot','recv-salt','recv-salt-lot','recv-bakingp','recv-bakingp-lot','recv-calcium','recv-calcium-lot','recv-sodiump','recv-sodiump-lot','recv-fumaric','recv-fumaric-lot','recv-enzyme','recv-enzyme-lot','recv-guar','recv-guar-lot','recv-other','recv-notes'].forEach(id=>{const el=g(id);if(el){if(el.tagName==='SELECT'){el.selectedIndex=0;}else{el.value='';}}});
     g('recv-date').value=new Date().toISOString().split('T')[0];
+    g('recv-supplier-other-wrap').style.display='none';
+    renderInStockSummary();
     showToast('✓ Receipt saved!');showTab('dash');
   }catch(err){showToast('⚠ '+err.message,true);}finally{hideLoading();}
 }
@@ -2242,7 +2372,13 @@ async function quickDeleteRun(id){
 
 function openEditReceipt(id){
   const r=receipts.find(x=>x.id===id);if(!r)return;
-  g('edit-receipt-id').value=id;g('edit-recv-date').value=r.date||'';g('edit-recv-supplier').value=r.supplier||'';g('edit-recv-po').value=r.po||'';g('edit-recv-flour-lbs').value=r.flour_lbs||'';g('edit-recv-flour-bags').value=r.flour_bags||'';g('edit-recv-flour-lot').value=r.flour_lot||'';g('edit-recv-oil').value=r.oil||'';g('edit-recv-oil-lot').value=r.oil_lot||'';g('edit-recv-beta').value=r.beta||'';g('edit-recv-beta-lot').value=r.beta_lot||'';g('edit-recv-other').value=r.other||'';g('edit-recv-notes').value=r.notes||'';g('edit-recv-changed-by').value='';
+  g('edit-receipt-id').value=id;g('edit-recv-date').value=r.date||'';g('edit-recv-receiver').value=r.receiver||'';g('edit-recv-po').value=r.po||'';g('edit-recv-flour-lbs').value=r.flour_lbs||'';g('edit-recv-flour-bags').value=r.flour_bags||'';g('edit-recv-flour-lot').value=r.flour_lot||'';g('edit-recv-flour-silo').value=r.flour_silo||'';g('edit-recv-flour-cwt').value=r.flour_cwt||'';g('edit-recv-ww-silo').value=r.ww_silo||'';g('edit-recv-oil').value=r.oil||'';g('edit-recv-oil-lot').value=r.oil_lot||'';g('edit-recv-beta').value=r.beta||'';g('edit-recv-beta-lot').value=r.beta_lot||'';g('edit-recv-other').value=r.other||'';g('edit-recv-notes').value=r.notes||'';g('edit-recv-changed-by').value='';
+  // Supplier dropdown logic
+  const supplierSel=g('edit-recv-supplier');
+  const knownSuppliers=['ADM Milling','Ardent Mills','Bay State Milling','Cargill','ConAgra Mills','General Mills','Grain Craft','Grupo Industrial Maseca','King Arthur','Siemer Milling'];
+  if(knownSuppliers.includes(r.supplier)){supplierSel.value=r.supplier;g('edit-recv-supplier-other-wrap').style.display='none';}
+  else if(r.supplier){supplierSel.value='Other';g('edit-recv-supplier-other-wrap').style.display='';g('edit-recv-supplier-other').value=r.supplier;}
+  else{supplierSel.value='';g('edit-recv-supplier-other-wrap').style.display='none';}
   g('edit-receipt-modal').classList.remove('hidden');document.body.style.overflow='hidden';
 }
 function closeEditReceipt(){g('edit-receipt-modal').classList.add('hidden');document.body.style.overflow='';}
@@ -2250,7 +2386,9 @@ async function saveEditReceipt(){
   const id=parseInt(g('edit-receipt-id').value),changedBy=egt('edit-recv-changed-by');
   if(!egt('edit-recv-date')){showToast('⚠ Date required',true);return;}
   if(!changedBy){showToast('⚠ Enter your name',true);return;}
-  const updated={date:egt('edit-recv-date'),supplier:egt('edit-recv-supplier'),po:egt('edit-recv-po'),flour_lbs:egv('edit-recv-flour-lbs'),flour_bags:egv('edit-recv-flour-bags'),flour_lot:egt('edit-recv-flour-lot'),oil:egv('edit-recv-oil'),oil_lot:egt('edit-recv-oil-lot'),beta:egv('edit-recv-beta'),beta_lot:egt('edit-recv-beta-lot'),other:egt('edit-recv-other'),notes:egt('edit-recv-notes')};
+  let supplier=egt('edit-recv-supplier');
+  if(supplier==='Other'){supplier=egt('edit-recv-supplier-other')||'Other';}
+  const updated={date:egt('edit-recv-date'),receiver:egt('edit-recv-receiver'),supplier,po:egt('edit-recv-po'),flour_lbs:egv('edit-recv-flour-lbs'),flour_bags:egv('edit-recv-flour-bags'),flour_lot:egt('edit-recv-flour-lot'),flour_silo:egt('edit-recv-flour-silo'),flour_cwt:egv('edit-recv-flour-cwt'),ww_silo:egt('edit-recv-ww-silo'),oil:egv('edit-recv-oil'),oil_lot:egt('edit-recv-oil-lot'),beta:egv('edit-recv-beta'),beta_lot:egt('edit-recv-beta-lot'),other:egt('edit-recv-other'),notes:egt('edit-recv-notes')};
   showLoading('Saving…');
   try{
     const old=receipts.find(x=>x.id===id)||{};
@@ -2552,7 +2690,7 @@ function dlExcel(sheets,fname){
 }
 function runsToRows(data){return data.map(r=>({'Date':r.date,'Shift':r.shift||'','Operator':r.operator||'','Group':r.product_group||'','Items':(r.items||[]).map(i=>i.name+': '+i.cases).join(' | '),'Total Cases':r.totalCases||r.total_cases||0,'Flour (lbs)':r.flour||0,'lbs/case':r.ratio||'','Oil (cases)':r.oil||0,'Beta Tablets':r.beta||0,'Notes':r.notes||''}));}
 function shipmentsToRows(data){const rows=[];data.forEach(s=>(s.items||[]).forEach(item=>rows.push({'Date':s.date,'Recipient':s.recipient||'','PO':s.po||'','Product':item.product,'Production Date':item.production_date,'Cases':item.cases,'Notes':s.notes||''})));return rows;}
-function receiptsToRows(data){return data.map(r=>({'Date':r.date,'Supplier':r.supplier||'','PO':r.po||'','Flour (lbs)':r.flour_lbs||0,'Flour Bags':r.flour_bags||0,'Flour Lot':r.flour_lot||'','WW Flour (lbs)':r.ww_lbs||0,'Oil (cases)':r.oil||0,'Beta':r.beta||0,'Gordita':r.gordita||0,'Salt Bags':r.salt||0,'Baking P Bags':r.bakingp||0,'Calcium Bags':r.calcium||0,'Sodium P Bags':r.sodiump||0,'Fumaric Bags':r.fumaric||0,'Enzyme Bags':r.enzyme||0,'Guar Bags':r.guar||0,'Other':r.other||'','Notes':r.notes||''}));}
+function receiptsToRows(data){return data.map(r=>({'Date':r.date,'Receiver':r.receiver||'','Supplier':r.supplier||'','PO':r.po||'','Flour (lbs)':r.flour_lbs||0,'Flour Bags':r.flour_bags||0,'Flour Silo':r.flour_silo||'','Flour CWT':r.flour_cwt||0,'Flour Lot':r.flour_lot||'','WW Flour (lbs)':r.ww_lbs||0,'WW Silo':r.ww_silo||'','WW CWT':r.ww_cwt||0,'Oil (cases)':r.oil||0,'Beta':r.beta||0,'Gordita':r.gordita||0,'Salt Bags':r.salt||0,'Baking P Bags':r.bakingp||0,'Calcium Bags':r.calcium||0,'Sodium P Bags':r.sodiump||0,'Fumaric Bags':r.fumaric||0,'Enzyme Bags':r.enzyme||0,'Guar Bags':r.guar||0,'Other':r.other||'','Notes':r.notes||''}));}
 function batchesToRows(data){return data.map(b=>b.batch_type==='chemical'?{'Date':b.date,'Type':'Chemical','Operator':b.operator||'','Cases Created':b.total_cases||0,'Cases Remaining':b.remaining_cases||b.total_cases||0,'Calcium Bags':b.calcium_bags||0,'Sodium Bags':b.sodium_bags||0,'Baking Bags':b.baking_bags||0,'Salt Bags':b.salt_bags||0,'Notes':b.notes||''}:{'Date':b.date,'Type':'FGE Batch','Operator':b.operator||'','Fumaric Raw Bags':b.fumaric_bags||0,'Fumaric Produced (0.12oz)':b.fumaric_produced||0,'Guar Raw Bags':b.guar_bags||0,'Guar Produced (0.5oz)':b.guar_produced||0,'Enzyme Raw Bags':b.enzyme_bags||0,'Enzyme Produced (0.3oz)':b.enzyme_produced||0,'Notes':b.notes||''});}
 
 function exportRuns(p){const d=filterByDate(runs,p);if(!d.length){showToast('⚠ No data',true);return;}dlExcel([{name:'Production Runs',data:runsToRows(d)}],'Atotonilco_Runs_'+getLabel(p));}
