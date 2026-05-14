@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Atotonilco — Inventory System v5.1</title>
+<title>Atotonilco — Inventory System v5.1.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -734,32 +734,85 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
 
         <div class="ing-row">
           <div class="ing-name" style="margin-bottom:10px;">🌾 Flour</div>
-          <div class="form-row-3">
-            <div class="form-group">
-              <label>Bag Size</label>
-              <select id="recv-flour-bagsize" onchange="autoCalcFlour()">
-                <option value="50">50 lb</option>
-                <option value="100">100 lb</option>
-                <option value="55.12">25 kg (55.12 lb)</option>
-              </select>
+          <div id="recv-flour-silos">
+            <div class="recv-silo-entry" id="recv-silo-1" style="background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;">
+              <div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:var(--accent);margin-bottom:8px;">Silo 1</div>
+              <div class="form-row-3">
+                <div class="form-group">
+                  <label>Input Mode</label>
+                  <select id="recv-silo1-mode" onchange="toggleSiloMode(1)">
+                    <option value="bags">50 lb Bags</option>
+                    <option value="cwt">CWT</option>
+                  </select>
+                </div>
+                <div class="form-group" id="recv-silo1-bags-wrap">
+                  <label>Number of Bags</label>
+                  <input type="number" inputmode="numeric" id="recv-silo1-bags" placeholder="0" oninput="autoCalcSiloFlour(1)">
+                </div>
+                <div class="form-group" id="recv-silo1-cwt-wrap" style="display:none;">
+                  <label>CWT</label>
+                  <input type="number" inputmode="decimal" id="recv-silo1-cwt" placeholder="0" step="0.01" oninput="autoCalcSiloFlour(1)">
+                </div>
+                <div class="form-group">
+                  <label>Total lbs (auto)</label>
+                  <input type="number" id="recv-silo1-lbs" placeholder="0" readonly style="background:var(--surface2);font-weight:700;">
+                </div>
+              </div>
+              <div class="form-group"><label>Lot #</label><input type="text" id="recv-silo1-lot" placeholder="LOT"></div>
             </div>
-            <div class="form-group"><label>Number of Bags</label><input type="number" inputmode="numeric" id="recv-flour-bags" placeholder="0" oninput="autoCalcFlour()"></div>
-            <div class="form-group"><label>Total lbs (auto)</label><input type="number" id="recv-flour-lbs" placeholder="0" readonly style="background:var(--surface2);font-weight:700;"></div>
+            <div class="recv-silo-entry" id="recv-silo-2" style="background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;">
+              <div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:var(--accent);margin-bottom:8px;">Silo 2</div>
+              <div class="form-row-3">
+                <div class="form-group">
+                  <label>Input Mode</label>
+                  <select id="recv-silo2-mode" onchange="toggleSiloMode(2)">
+                    <option value="bags">50 lb Bags</option>
+                    <option value="cwt">CWT</option>
+                  </select>
+                </div>
+                <div class="form-group" id="recv-silo2-bags-wrap">
+                  <label>Number of Bags</label>
+                  <input type="number" inputmode="numeric" id="recv-silo2-bags" placeholder="0" oninput="autoCalcSiloFlour(2)">
+                </div>
+                <div class="form-group" id="recv-silo2-cwt-wrap" style="display:none;">
+                  <label>CWT</label>
+                  <input type="number" inputmode="decimal" id="recv-silo2-cwt" placeholder="0" step="0.01" oninput="autoCalcSiloFlour(2)">
+                </div>
+                <div class="form-group">
+                  <label>Total lbs (auto)</label>
+                  <input type="number" id="recv-silo2-lbs" placeholder="0" readonly style="background:var(--surface2);font-weight:700;">
+                </div>
+              </div>
+              <div class="form-group"><label>Lot #</label><input type="text" id="recv-silo2-lot" placeholder="LOT"></div>
+            </div>
+            <div class="recv-silo-entry" id="recv-silo-3" style="background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;">
+              <div style="font-family:var(--font-display);font-size:14px;font-weight:800;color:var(--accent);margin-bottom:8px;">Silo 3</div>
+              <div class="form-row-3">
+                <div class="form-group">
+                  <label>Input Mode</label>
+                  <select id="recv-silo3-mode" onchange="toggleSiloMode(3)">
+                    <option value="bags">50 lb Bags</option>
+                    <option value="cwt">CWT</option>
+                  </select>
+                </div>
+                <div class="form-group" id="recv-silo3-bags-wrap">
+                  <label>Number of Bags</label>
+                  <input type="number" inputmode="numeric" id="recv-silo3-bags" placeholder="0" oninput="autoCalcSiloFlour(3)">
+                </div>
+                <div class="form-group" id="recv-silo3-cwt-wrap" style="display:none;">
+                  <label>CWT</label>
+                  <input type="number" inputmode="decimal" id="recv-silo3-cwt" placeholder="0" step="0.01" oninput="autoCalcSiloFlour(3)">
+                </div>
+                <div class="form-group">
+                  <label>Total lbs (auto)</label>
+                  <input type="number" id="recv-silo3-lbs" placeholder="0" readonly style="background:var(--surface2);font-weight:700;">
+                </div>
+              </div>
+              <div class="form-group"><label>Lot #</label><input type="text" id="recv-silo3-lot" placeholder="LOT"></div>
+            </div>
           </div>
-          <div class="form-row-3">
-            <div class="form-group">
-              <label>Silo Destination</label>
-              <select id="recv-flour-silo">
-                <option value="">— Select Silo —</option>
-                <option value="Silo 1">Silo 1</option>
-                <option value="Silo 2">Silo 2</option>
-                <option value="Silo 3">Silo 3</option>
-                <option value="Silo 4">Silo 4</option>
-                <option value="Warehouse">Warehouse (bagged)</option>
-              </select>
-            </div>
-            <div class="form-group"><label>CWT (auto)</label><input type="number" id="recv-flour-cwt" placeholder="0" readonly style="background:var(--surface2);font-weight:700;" step="0.01"></div>
-            <div class="form-group"><label>Lot #</label><input type="text" id="recv-flour-lot" placeholder="LOT"></div>
+          <div style="background:var(--surface2);border:1px solid var(--accent-dark);border-radius:8px;padding:10px 14px;font-family:var(--font-display);font-size:14px;font-weight:800;">
+            Flour Total: <span id="recv-flour-total-lbs" style="color:var(--accent);">0</span> lbs · <span id="recv-flour-total-cwt" style="color:var(--accent);">0</span> CWT
           </div>
         </div>
 
@@ -1942,11 +1995,25 @@ async function saveRun(){
   });
   const fgeUsage=group==='A'?collectFGEUsage():{fumaric:0,guar:0,enzyme:0};
   const run={date,shift:gt('run-shift'),operator:gt('run-operator'),product_group:group,flour:totalFlour,silos_json:JSON.stringify(siloEntries),water:gv('ing-water'),oil:gv('ing-oil'),lot_oil:gt('lot-oil'),beta:gv('ing-beta'),lot_beta:gt('lot-beta'),batches_json:group==='A'?JSON.stringify(collectBatches()):'[]',gordita:['B','C'].includes(group)?gv('ing-gordita'):0,lot_gordita:['B','C'].includes(group)?gt('lot-gordita'):'',fumaric:['B','C'].includes(group)?gv('ing-fumaric'):0,lot_fumaric:['B','C'].includes(group)?gt('lot-fumaric'):'',sodiump:group==='B'?gv('ing-sodiump'):0,lot_sodiump:group==='B'?gt('lot-sodiump'):'',fge_fumaric:fgeUsage.fumaric,fge_guar:fgeUsage.guar,fge_enzyme:fgeUsage.enzyme,items_json:JSON.stringify(items),total_cases:totalCases,ratio:totalCases>0?(totalFlour/totalCases).toFixed(2):'0',notes:gt('run-notes')};
+  // Collect batch entries before saving (for deduction after save)
+  const batchEntries=group==='A'?collectBatches():[];
   showLoading('Saving…');
   try{
     const saved=await safeInsert('production_runs',run);
     runs.unshift({...run,id:saved[0]?.id||Date.now(),items,totalCases});
-    clearRun();refreshDashboard();renderUsage();checkLowStockAlerts();
+    // Deduct remaining_cases from used formula batches
+    for(const be of batchEntries){
+      const bIdx=batches.findIndex(b=>String(b.id)===String(be.batch_id));
+      if(bIdx===-1)continue;
+      const b=batches[bIdx];
+      const oldRemaining=b.remaining_cases||b.total_cases||0;
+      const newRemaining=Math.max(0,oldRemaining-be.cases);
+      try{
+        await SB.update('formula_batches',b.id,{remaining_cases:newRemaining});
+        batches[bIdx]={...b,remaining_cases:newRemaining};
+      }catch(e){console.warn('Batch deduction failed for batch',b.id,e);}
+    }
+    clearRun();refreshDashboard();renderUsage();checkLowStockAlerts();renderBatchHistory();
     showToast('✓ Run saved!');showTab('dash');
   }catch(err){showToast('⚠ Error: '+err.message,true);}
   finally{hideLoading();}
@@ -2232,13 +2299,36 @@ function handleEditSupplierChange(){
   const sel=g('edit-recv-supplier');
   g('edit-recv-supplier-other-wrap').style.display=sel.value==='Other'?'':'none';
 }
-function autoCalcFlour(){
-  const bagSize=parseFloat(g('recv-flour-bagsize')?.value)||50;
-  const bags=parseFloat(g('recv-flour-bags')?.value)||0;
-  const totalLbs=bags*bagSize;
-  const lbsEl=g('recv-flour-lbs');if(lbsEl)lbsEl.value=totalLbs>0?Math.round(totalLbs*100)/100:'';
-  const cwtEl=g('recv-flour-cwt');if(cwtEl)cwtEl.value=totalLbs>0?(totalLbs/100).toFixed(2):'';
+function toggleSiloMode(n){
+  const mode=gt('recv-silo'+n+'-mode');
+  g('recv-silo'+n+'-bags-wrap').style.display=mode==='bags'?'':'none';
+  g('recv-silo'+n+'-cwt-wrap').style.display=mode==='cwt'?'':'none';
+  // Clear both inputs when switching
+  const bagsEl=g('recv-silo'+n+'-bags'),cwtEl=g('recv-silo'+n+'-cwt'),lbsEl=g('recv-silo'+n+'-lbs');
+  if(bagsEl)bagsEl.value='';if(cwtEl)cwtEl.value='';if(lbsEl)lbsEl.value='';
+  updateFlourTotals();
 }
+function autoCalcSiloFlour(n){
+  const mode=gt('recv-silo'+n+'-mode');
+  const lbsEl=g('recv-silo'+n+'-lbs');
+  if(mode==='bags'){
+    const bags=parseFloat(g('recv-silo'+n+'-bags')?.value)||0;
+    const totalLbs=bags*50;
+    if(lbsEl)lbsEl.value=totalLbs>0?Math.round(totalLbs*100)/100:'';
+  }else{
+    const cwt=parseFloat(g('recv-silo'+n+'-cwt')?.value)||0;
+    const totalLbs=cwt*100;
+    if(lbsEl)lbsEl.value=totalLbs>0?Math.round(totalLbs*100)/100:'';
+  }
+  updateFlourTotals();
+}
+function updateFlourTotals(){
+  let total=0;
+  for(let n=1;n<=3;n++){total+=parseFloat(g('recv-silo'+n+'-lbs')?.value)||0;}
+  const totalEl=g('recv-flour-total-lbs');if(totalEl)totalEl.textContent=total>0?total.toLocaleString():'0';
+  const cwtEl=g('recv-flour-total-cwt');if(cwtEl)cwtEl.textContent=total>0?(total/100).toFixed(2):'0';
+}
+function autoCalcFlour(){ updateFlourTotals(); }
 function autoCalcWW(){
   const bagSize=parseFloat(g('recv-ww-bagsize')?.value)||50;
   const bags=parseFloat(g('recv-ww-bags')?.value)||0;
@@ -2255,14 +2345,27 @@ async function saveReceival(){
   // Supplier: dropdown or "Other" text
   let supplier=gt('recv-supplier');
   if(supplier==='Other'){supplier=gt('recv-supplier-other')||'Other';}
-  const r={date,receiver,supplier,po:gt('recv-po'),flour_lbs:gv('recv-flour-lbs'),flour_bags:gv('recv-flour-bags'),flour_lot:gt('recv-flour-lot'),flour_silo:gt('recv-flour-silo'),flour_cwt:gv('recv-flour-cwt'),ww_lbs:gv('recv-ww-lbs'),ww_bags:gv('recv-ww-bags'),ww_lot:gt('recv-ww-lot'),ww_silo:gt('recv-ww-silo'),ww_cwt:gv('recv-ww-cwt'),oil:gv('recv-oil'),oil_lot:gt('recv-oil-lot'),beta:gv('recv-beta'),beta_lot:gt('recv-beta-lot'),gordita:gv('recv-gordita'),gordita_lot:gt('recv-gordita-lot'),salt:gv('recv-salt'),salt_lot:gt('recv-salt-lot'),bakingp:gv('recv-bakingp'),bakingp_lot:gt('recv-bakingp-lot'),calcium:gv('recv-calcium'),calcium_lot:gt('recv-calcium-lot'),sodiump:gv('recv-sodiump'),sodiump_lot:gt('recv-sodiump-lot'),fumaric:gv('recv-fumaric'),fumaric_lot:gt('recv-fumaric-lot'),enzyme:gv('recv-enzyme'),enzyme_lot:gt('recv-enzyme-lot'),guar:gv('recv-guar'),guar_lot:gt('recv-guar-lot'),other:gt('recv-other'),notes:gt('recv-notes')};
+  // Collect flour from 3 silos
+  const flourSilos=[];let flourTotalLbs=0;
+  for(let n=1;n<=3;n++){
+    const lbs=parseFloat(g('recv-silo'+n+'-lbs')?.value)||0;
+    const lot=gt('recv-silo'+n+'-lot');
+    const mode=gt('recv-silo'+n+'-mode');
+    const bags=mode==='bags'?(parseFloat(g('recv-silo'+n+'-bags')?.value)||0):0;
+    const cwt=mode==='cwt'?(parseFloat(g('recv-silo'+n+'-cwt')?.value)||0):0;
+    if(lbs>0){flourSilos.push({silo:'Silo '+n,lbs,bags,cwt,lot,mode});flourTotalLbs+=lbs;}
+  }
+  const r={date,receiver,supplier,po:gt('recv-po'),flour_lbs:flourTotalLbs,flour_bags:flourSilos.reduce((s,e)=>s+e.bags,0),flour_lot:flourSilos.map(e=>e.lot).filter(Boolean).join(', '),flour_silo:flourSilos.map(e=>e.silo).join(', '),flour_cwt:flourTotalLbs>0?parseFloat((flourTotalLbs/100).toFixed(2)):0,flour_silos_json:JSON.stringify(flourSilos),ww_lbs:gv('recv-ww-lbs'),ww_bags:gv('recv-ww-bags'),ww_lot:gt('recv-ww-lot'),ww_silo:gt('recv-ww-silo'),ww_cwt:gv('recv-ww-cwt'),oil:gv('recv-oil'),oil_lot:gt('recv-oil-lot'),beta:gv('recv-beta'),beta_lot:gt('recv-beta-lot'),gordita:gv('recv-gordita'),gordita_lot:gt('recv-gordita-lot'),salt:gv('recv-salt'),salt_lot:gt('recv-salt-lot'),bakingp:gv('recv-bakingp'),bakingp_lot:gt('recv-bakingp-lot'),calcium:gv('recv-calcium'),calcium_lot:gt('recv-calcium-lot'),sodiump:gv('recv-sodiump'),sodiump_lot:gt('recv-sodiump-lot'),fumaric:gv('recv-fumaric'),fumaric_lot:gt('recv-fumaric-lot'),enzyme:gv('recv-enzyme'),enzyme_lot:gt('recv-enzyme-lot'),guar:gv('recv-guar'),guar_lot:gt('recv-guar-lot'),other:gt('recv-other'),notes:gt('recv-notes')};
   showLoading('Saving…');
   try{
     const saved=await safeInsert('receipts',r);
     receipts.unshift({...r,id:saved[0]?.id||Date.now()});
-    ['recv-date','recv-receiver','recv-supplier','recv-supplier-other','recv-po','recv-flour-lbs','recv-flour-bags','recv-flour-lot','recv-flour-silo','recv-flour-cwt','recv-flour-bagsize','recv-ww-lbs','recv-ww-bags','recv-ww-lot','recv-ww-silo','recv-ww-cwt','recv-ww-bagsize','recv-oil','recv-oil-lot','recv-beta','recv-beta-lot','recv-gordita','recv-gordita-lot','recv-salt','recv-salt-lot','recv-bakingp','recv-bakingp-lot','recv-calcium','recv-calcium-lot','recv-sodiump','recv-sodiump-lot','recv-fumaric','recv-fumaric-lot','recv-enzyme','recv-enzyme-lot','recv-guar','recv-guar-lot','recv-other','recv-notes'].forEach(id=>{const el=g(id);if(el){if(el.tagName==='SELECT'){el.selectedIndex=0;}else{el.value='';}}});
+    ['recv-date','recv-receiver','recv-supplier','recv-supplier-other','recv-po','recv-silo1-bags','recv-silo1-cwt','recv-silo1-lbs','recv-silo1-lot','recv-silo1-mode','recv-silo2-bags','recv-silo2-cwt','recv-silo2-lbs','recv-silo2-lot','recv-silo2-mode','recv-silo3-bags','recv-silo3-cwt','recv-silo3-lbs','recv-silo3-lot','recv-silo3-mode','recv-ww-lbs','recv-ww-bags','recv-ww-lot','recv-ww-silo','recv-ww-cwt','recv-ww-bagsize','recv-oil','recv-oil-lot','recv-beta','recv-beta-lot','recv-gordita','recv-gordita-lot','recv-salt','recv-salt-lot','recv-bakingp','recv-bakingp-lot','recv-calcium','recv-calcium-lot','recv-sodiump','recv-sodiump-lot','recv-fumaric','recv-fumaric-lot','recv-enzyme','recv-enzyme-lot','recv-guar','recv-guar-lot','recv-other','recv-notes'].forEach(id=>{const el=g(id);if(el){if(el.tagName==='SELECT'){el.selectedIndex=0;}else{el.value='';}}});
     g('recv-date').value=new Date().toISOString().split('T')[0];
     g('recv-supplier-other-wrap').style.display='none';
+    // Reset silo UI
+    for(let n=1;n<=3;n++){g('recv-silo'+n+'-bags-wrap').style.display='';g('recv-silo'+n+'-cwt-wrap').style.display='none';}
+    updateFlourTotals();
     renderInStockSummary();
     showToast('✓ Receipt saved!');showTab('dash');
   }catch(err){showToast('⚠ '+err.message,true);}finally{hideLoading();}
