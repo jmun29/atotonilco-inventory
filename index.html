@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Atotonilco — Inventory System v5.1.6</title>
+<title>Atotonilco — Inventory System v5.1.7</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -1061,6 +1061,15 @@ input[readonly]{color:var(--accent)!important;border-color:var(--accent-dark)!im
           <div class="export-btn-row">
             <button class="export-btn" onclick="exportUsage('month')">This Month</button>
             <button class="export-btn blue" onclick="exportUsage('all')">All Time</button>
+          </div>
+        </div>
+        <div class="export-option">
+          <div class="export-title">Per-Item Ingredient Breakdown</div>
+          <div class="export-desc">Flour, oil, beta, and formula allocated per product per run (proportional to cases).</div>
+          <div class="export-btn-row">
+            <button class="export-btn" onclick="exportItemBreakdown('week')">This Week</button>
+            <button class="export-btn" onclick="exportItemBreakdown('month')">This Month</button>
+            <button class="export-btn blue" onclick="exportItemBreakdown('all')">All Time</button>
           </div>
         </div>
         <div class="export-option">
@@ -2976,7 +2985,29 @@ function dlExcel(sheets,fname){
   sheets.forEach(s=>{const ws=XLSX.utils.json_to_sheet(s.data);ws['!cols']=Object.keys(s.data[0]||{}).map(()=>({wch:18}));XLSX.utils.book_append_sheet(wb,ws,s.name);});
   XLSX.writeFile(wb,fname+'.xlsx');showToast('✓ Downloaded: '+fname+'.xlsx');
 }
-function runsToRows(data){return data.map(r=>({'Date':r.date,'Shift':r.shift||'','Operator':r.operator||'','Group':r.product_group||'','Items':(r.items||[]).map(i=>i.name+': '+i.cases).join(' | '),'Total Cases':r.totalCases||r.total_cases||0,'Flour (lbs)':r.flour||0,'lbs/case':r.ratio||'','Oil (cases)':r.oil||0,'Beta Tablets':r.beta||0,'Notes':r.notes||''}));}
+function getFormulaCases(r){
+  try{const b=typeof r.batches_json==='string'?JSON.parse(r.batches_json):r.batches_json;if(Array.isArray(b))return b.reduce((s,e)=>s+(e.cases||0),0);}catch(e){}return 0;
+}
+function runsToRows(data){return data.map(r=>({'Date':r.date,'Shift':r.shift||'','Operator':r.operator||'','Group':r.product_group||'','Items':(r.items||[]).map(i=>i.name+': '+i.cases).join(' | '),'Total Cases':r.totalCases||r.total_cases||0,'Flour (lbs)':r.flour||0,'lbs/case':r.ratio||'','Oil (cases)':r.oil||0,'Beta Tablets':r.beta||0,'Formula Cases Used':getFormulaCases(r),'Notes':r.notes||''}));}
+function runsToItemRows(data){
+  const rows=[];
+  data.forEach(r=>{
+    const total=r.totalCases||r.total_cases||0;
+    const flour=r.flour||0,oil=r.oil||0,beta=r.beta||0,formula=getFormulaCases(r);
+    (r.items||[]).forEach(item=>{
+      const cases=item.cases||0;
+      const pct=total>0?cases/total:0;
+      rows.push({
+        'Date':r.date,'Shift':r.shift||'','Operator':r.operator||'','Group':r.product_group||'',
+        'Product':item.name,'Cases':cases,'Run Total Cases':total,'% of Run':total>0?(pct*100).toFixed(1)+'%':'—',
+        'Flour (lbs)':+(flour*pct).toFixed(2),'Oil (cases)':+(oil*pct).toFixed(2),
+        'Beta Tablets':+(beta*pct).toFixed(2),'Formula Cases':+(formula*pct).toFixed(2),
+        'lbs/case':cases>0?((flour*pct)/cases).toFixed(2):'—','Notes':r.notes||''
+      });
+    });
+  });
+  return rows;
+}
 function shipmentsToRows(data){const rows=[];data.forEach(s=>(s.items||[]).forEach(item=>rows.push({'Date':s.date,'Recipient':s.recipient||'','PO':s.po||'','Product':item.product,'Production Date':item.production_date,'Cases':item.cases,'Notes':s.notes||''})));return rows;}
 function receiptsToRows(data){return data.map(r=>({'Date':r.date,'Receiver':r.receiver||'','Supplier':r.supplier||'','PO':r.po||'','Flour (lbs)':r.flour_lbs||0,'Flour Bags':r.flour_bags||0,'Flour Silo':r.flour_silo||'','Flour CWT':r.flour_cwt||0,'Flour Lot':r.flour_lot||'','WW Flour (lbs)':r.ww_lbs||0,'WW Silo':r.ww_silo||'','WW CWT':r.ww_cwt||0,'Oil (cases)':r.oil||0,'Beta':r.beta||0,'Gordita':r.gordita||0,'Salt Bags':r.salt||0,'Baking P Bags':r.bakingp||0,'Calcium Bags':r.calcium||0,'Sodium P Bags':r.sodiump||0,'Fumaric Bags':r.fumaric||0,'Enzyme Bags':r.enzyme||0,'Guar Bags':r.guar||0,'Other':r.other||'','Notes':r.notes||''}));}
 function batchesToRows(data){return data.map(b=>b.batch_type==='chemical'?{'Date':b.date,'Type':'Chemical','Operator':b.operator||'','Cases Created':b.total_cases||0,'Cases Remaining':b.remaining_cases||b.total_cases||0,'Calcium Bags':b.calcium_bags||0,'Sodium Bags':b.sodium_bags||0,'Baking Bags':b.baking_bags||0,'Salt Bags':b.salt_bags||0,'Notes':b.notes||''}:{'Date':b.date,'Type':'FGE Batch','Operator':b.operator||'','Fumaric Raw Bags':b.fumaric_bags||0,'Fumaric Produced (0.12oz)':b.fumaric_produced||0,'Guar Raw Bags':b.guar_bags||0,'Guar Produced (0.5oz)':b.guar_produced||0,'Enzyme Raw Bags':b.enzyme_bags||0,'Enzyme Produced (0.3oz)':b.enzyme_produced||0,'Notes':b.notes||''});}
@@ -2995,6 +3026,11 @@ function exportUsage(p){
   if(!rows.length){showToast('⚠ No data',true);return;}
   dlExcel([{name:'Usage',data:rows}],'Atotonilco_Usage_'+getLabel(p));
 }
+function exportItemBreakdown(p){
+  const d=filterByDate(runs,p);const rows=runsToItemRows(d);
+  if(!rows.length){showToast('⚠ No data',true);return;}
+  dlExcel([{name:'Per-Item Breakdown',data:rows}],'Atotonilco_ItemBreakdown_'+getLabel(p));
+}
 function exportCustomRange(){
   const start=gt('export-start'),end=gt('export-end');
   if(!start&&!end){showToast('⚠ Set at least one date',true);return;}
@@ -3002,6 +3038,7 @@ function exportCustomRange(){
   const rR=filterByRange(runs,start,end);if(rR.length)sheets.push({name:'Production Runs',data:runsToRows(rR)});
   const rS=filterByRange(shipments,start,end),rSrows=shipmentsToRows(rS);if(rSrows.length)sheets.push({name:'Shipments',data:rSrows});
   const rC=filterByRange(receipts,start,end);if(rC.length)sheets.push({name:'Receipts',data:receiptsToRows(rC)});
+  const rIR=runsToItemRows(filterByRange(runs,start,end));if(rIR.length)sheets.push({name:'Per-Item Breakdown',data:rIR});
   if(!sheets.length){showToast('⚠ No data in range',true);return;}
   dlExcel(sheets,'Atotonilco_Range_'+(start||'start')+'_to_'+(end||'end'));
 }
@@ -3011,6 +3048,7 @@ function exportFull(p){
   const rs=filterByDate(shipments,p),srows=shipmentsToRows(rs);if(srows.length)sheets.push({name:'Shipments',data:srows});
   const rc=filterByDate(receipts,p);if(rc.length)sheets.push({name:'Receipts',data:receiptsToRows(rc)});
   const rb=filterByDate(batches,p);if(rb.length)sheets.push({name:'Formula Batches',data:batchesToRows(rb)});
+  const riRows=runsToItemRows(filterByDate(runs,p));if(riRows.length)sheets.push({name:'Per-Item Breakdown',data:riRows});
   if(!sheets.length){showToast('⚠ No data',true);return;}
   dlExcel(sheets,'Atotonilco_FullReport_'+getLabel(p));
 }
